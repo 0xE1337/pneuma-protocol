@@ -102,7 +102,7 @@ export default function SkillsPage() {
                   </div>
                   <div className="text-right">
                     {isPerByte ? (
-                      <V5PriceDisplay
+                      <PerBytePriceDisplay
                         baseFee={s.baseFee}
                         inputPricePerKB={s.inputPricePerKB}
                         outputPricePerKB={s.outputPricePerKB}
@@ -134,14 +134,14 @@ export default function SkillsPage() {
                   </span>
                 </div>
 
-                {/* V5 上游披露 — 反中转透明度核心抓手 */}
-                {isV5 && s.upstreamModel && (
+                {/* per-byte 模式独有：上游披露 — 反中转透明度核心抓手 */}
+                {isPerByte && s.upstreamModel && (
                   <UpstreamDisclosure model={s.upstreamModel} markupBps={Number(s.markupBps)} />
                 )}
 
                 <ReputationBadge owner={s.owner as Address} />
 
-                {/* V6.0.2: 担保图徽章 —— 老 agent 给该 skill owner 锁了多少 USDC 背书 */}
+                {/* 担保图徽章 —— 老 agent 给该 skill owner 锁了多少 USDC 背书 */}
                 <BackedByBadge endorsee={s.owner as Address} />
 
                 <div className="text-[11px] text-ink-faint space-y-1 font-mono pt-2 border-t border-border/60">
@@ -204,7 +204,7 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
  *   - typical (50%): caller 用一半 output 的预期成本
  *   - 给 caller "调用前心里有数" 的颗粒度
  */
-function V5PriceDisplay({
+function PerBytePriceDisplay({
   baseFee,
   inputPricePerKB,
   outputPricePerKB,

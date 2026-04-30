@@ -306,7 +306,7 @@ function SkillRow({ skill }: { skill: SkillLike }) {
 function formatV5Typical(s: SkillLike): string {
   const inKB = Math.ceil(Number(s.maxInputBytes) / 1024);
   const outKB = Math.ceil(Number(s.maxOutputBytes) / 1024);
-  // typical = base + full input + half output（与 skills/page.tsx V5PriceDisplay 同口径）
+  // typical = base + full input + half output（与 skills/page.tsx PerBytePriceDisplay 同口径）
   const typical =
     Number(s.baseFee) +
     Number(s.inputPricePerKB) * inKB +
