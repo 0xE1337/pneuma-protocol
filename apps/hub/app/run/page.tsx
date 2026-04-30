@@ -492,12 +492,19 @@ function RunPageInner() {
               <div className="surface p-5 space-y-4">
                 <label className="label">Pick a Skill</label>
                 {skills.length === 0 ? (
-                  <div className="text-sm text-ink-dim">
-                    No active skills on-chain. Run{" "}
-                    <code className="font-mono text-[11px] text-cyan">
-                      forge script RegisterSkills
-                    </code>
-                    .
+                  <div className="text-sm text-ink-dim space-y-2">
+                    <div>No active skills on-chain yet. Two ways to register:</div>
+                    <ul className="text-[12px] font-mono text-ink-faint space-y-1 list-disc list-inside">
+                      <li>
+                        <code className="text-cyan">pneuma serve --skill-id N</code>{" "}
+                        — Pneuma-native skill registration
+                      </li>
+                      <li>
+                        <code className="text-cyan">pneuma anet bootstrap</code> +{" "}
+                        <code className="text-cyan">pneuma anet register-x402-skill</code>{" "}
+                        — bring an existing Agent Network skill into Pneuma
+                      </li>
+                    </ul>
                   </div>
                 ) : (
                   <div className="space-y-2">

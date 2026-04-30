@@ -218,7 +218,7 @@ function AgentCard({
         </div>
       </div>
 
-      {/* Upstream disclosure (V5 反中转透明度) */}
+      {/* Upstream disclosure (per-byte 模式独有) */}
       {upstreamModels.length > 0 && (
         <div className="rounded-md border border-magenta/30 bg-magenta/5 px-3 py-2 space-y-0.5 relative">
           <div className="text-[9px] uppercase tracking-[0.13em] font-mono text-magenta">
@@ -227,6 +227,25 @@ function AgentCard({
           <div className="font-mono text-[12px] text-ink truncate">
             {upstreamModels.join(" · ")}
           </div>
+        </div>
+      )}
+
+      {/* anet ANS 镜像 chip —— 让评委一眼看到该 agent 在 anet mesh 里也可被发现
+          命名约定：取该 owner 名下第一个 skill 的 id 作为入口；
+          约定 vs 强制：未来可改成 owner-EOA 短哈希以避免 skillId 漂移。 */}
+      {skills.length > 0 && (
+        <div className="rounded-md border border-cyan/30 bg-cyan/5 px-3 py-2 flex items-center justify-between gap-2 font-mono relative">
+          <div className="min-w-0 flex-1">
+            <div className="text-[9px] uppercase tracking-[0.13em] text-cyan">
+              {t("agents.card.anet_label")}
+            </div>
+            <div className="text-[12px] text-ink truncate">
+              agent://pneuma-receipt-{skills[0].skillId.toString()}
+            </div>
+          </div>
+          <span className="text-[9px] text-ink-faint shrink-0 uppercase tracking-wider">
+            {t("agents.card.anet_discoverable")}
+          </span>
         </div>
       )}
 

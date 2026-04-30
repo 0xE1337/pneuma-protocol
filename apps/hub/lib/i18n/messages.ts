@@ -51,6 +51,14 @@ export const messages = {
     "agent_hero.compat":
       "兼容 Agent Network 协议（agentnetwork.org.cn）—— Pneuma 给 anet mesh 加一层链上 USDC 支付 + 跨平台可携带声誉。",
     "agent_hero.compat_chip": "兼容 Agent Network · agentnetwork.org.cn",
+    "agent_hero.daemon.loading": "anet daemon · 检测中…",
+    "agent_hero.daemon.connected": "anet daemon · 已联动",
+    "agent_hero.daemon.not_running": "anet daemon · 未启动",
+    "agent_hero.daemon.not_running_hint":
+      "anet 已安装但 daemon 没在跑。运行 `anet daemon &` 启动。",
+    "agent_hero.daemon.not_installed": "anet daemon · 未安装",
+    "agent_hero.daemon.not_installed_hint":
+      "本机未装 anet。运行 `npm install -g @agentnetwork/anet` 后再启 daemon。",
 
     // ── Home — Product mockup ─────────────────────────
     "home.mockup.user_request_label": "用户请求",
@@ -190,6 +198,8 @@ export const messages = {
     "agents.card.skill_count_one": "skill",
     "agents.card.skill_count_many": "skills",
     "agents.card.upstream_label": "上游模型（自声明）",
+    "agents.card.anet_label": "anet ANS 镜像",
+    "agents.card.anet_discoverable": "可发现",
     "agents.card.total_calls": "累计调用",
     "agents.card.no_reputation": "暂无声誉",
     "agents.card.attestation_count_one": "条履历",
@@ -320,6 +330,14 @@ export const messages = {
     "agent_hero.compat":
       "Compatible with the Agent Network protocol (agentnetwork.org.cn) — Pneuma adds on-chain USDC payment + cross-platform portable reputation on top of the anet mesh.",
     "agent_hero.compat_chip": "Compatible with Agent Network · agentnetwork.org.cn",
+    "agent_hero.daemon.loading": "anet daemon · checking…",
+    "agent_hero.daemon.connected": "anet daemon · linked",
+    "agent_hero.daemon.not_running": "anet daemon · not running",
+    "agent_hero.daemon.not_running_hint":
+      "anet is installed but the daemon is not running. Start it with `anet daemon &`.",
+    "agent_hero.daemon.not_installed": "anet daemon · not installed",
+    "agent_hero.daemon.not_installed_hint":
+      "anet not installed on this machine. Run `npm install -g @agentnetwork/anet`, then start the daemon.",
 
     // ── Home — Product mockup ─────────────────────────
     "home.mockup.user_request_label": "User Request",
@@ -458,6 +476,8 @@ export const messages = {
     "agents.card.skill_count_one": "skill",
     "agents.card.skill_count_many": "skills",
     "agents.card.upstream_label": "Upstream models (self-declared)",
+    "agents.card.anet_label": "anet ANS mirror",
+    "agents.card.anet_discoverable": "discoverable",
     "agents.card.total_calls": "Total calls",
     "agents.card.no_reputation": "No reputation yet",
     "agents.card.attestation_count_one": "attestation",

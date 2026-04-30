@@ -141,6 +141,9 @@ export default function SoulProfilePage({ params }: { params: Promise<{ soulId: 
           </div>
         </header>
 
+        {/* anet 联动状态面板 —— 把"是否真的接入 Agent Network"做成可视证据 */}
+        <AnetBindingPanel soulId={soulId} />
+
         {/* Ownership lineage */}
         <OwnershipLineage tokenId={tokenId} />
 
@@ -1686,5 +1689,147 @@ function DimRow({
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * AnetBindingPanel —— 显示当前 Soul 跟 anet daemon 的联动状态
+ *
+ * 三种渲染分支：
+ *   1. 当前 Soul 已绑定（binding.soulTokenId === soulId）→ 绿底显示 did:key + daemon status
+ *   2. 别的 Soul 已绑定，本 Soul 未绑 → 灰底提示"其他 Soul 占用了 binding"
+ *   3. 完全没绑 → 蓝底教用户跑 `pneuma anet bootstrap`
+ *
+ * 数据源：/api/anet-status（读 ~/.pneuma/anet-binding.json + 试探 anet whoami）
+ */
+function AnetBindingPanel({ soulId }: { soulId: string }) {
+  type DaemonStatus = "connected" | "not_installed" | "not_running" | "loading";
+  interface Status {
+    binding: {
+      soulTokenId?: string;
+      did?: string;
+      tba?: string;
+      ownerEoa?: string;
+      boundAt?: string;
+    } | null;
+    anetDaemon: DaemonStatus;
+    anetDid: string | null;
+  }
+
+  const [status, setStatus] = useState<Status>({
+    binding: null,
+    anetDaemon: "loading",
+    anetDid: null,
+  });
+
+  useEffect(() => {
+    fetch("/api/anet-status")
+      .then((r) => r.json())
+      .then((d: Status) => setStatus(d))
+      .catch(() =>
+        setStatus({ binding: null, anetDaemon: "not_running", anetDid: null }),
+      );
+  }, []);
+
+  const isMine = status.binding?.soulTokenId === soulId;
+  const otherSoul = !!status.binding && !isMine;
+
+  // daemon 状态点的颜色
+  const daemonDot =
+    status.anetDaemon === "connected"
+      ? "bg-green-400"
+      : status.anetDaemon === "loading"
+      ? "bg-ink-faint animate-pulse"
+      : "bg-amber-400";
+
+  if (isMine && status.binding) {
+    return (
+      <section className="surface px-5 py-4 my-6 border border-cyan/40 bg-cyan/5">
+        <div className="flex items-baseline justify-between gap-4 mb-2">
+          <h3 className="text-[11px] uppercase tracking-[0.18em] font-mono text-cyan">
+            ⬡ Pneuma × Agent Network · 已联动
+          </h3>
+          <span className="inline-flex items-center gap-2 text-[10px] font-mono text-ink-dim">
+            <span className={`w-1.5 h-1.5 rounded-full ${daemonDot}`} />
+            anet daemon ·{" "}
+            {status.anetDaemon === "connected"
+              ? "running"
+              : status.anetDaemon === "loading"
+              ? "checking…"
+              : status.anetDaemon === "not_running"
+              ? "not running"
+              : "not installed"}
+          </span>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4 text-[12px] font-mono">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.13em] text-ink-faint">
+              did:key
+            </div>
+            <div className="text-ink truncate">
+              {status.binding.did ?? "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.13em] text-ink-faint">
+              agent:// URI
+            </div>
+            <div className="text-ink truncate">
+              agent://pneuma-receipt-{soulId}
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 text-[10px] text-ink-faint font-mono">
+          这条 Soul 跟 anet 上的 did:key 绑定后，所有 anet 任务都可镜像成链上
+          attestation 写到 #{soulId} 的 TBA。运行
+          <code className="text-cyan mx-1">pneuma anet mirror &lt;task-id&gt;</code>
+          预览待镜像的收据。
+        </div>
+      </section>
+    );
+  }
+
+  if (otherSoul) {
+    return (
+      <section className="surface px-5 py-4 my-6 border border-amber-400/30 bg-amber-400/5">
+        <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-amber-400 mb-1">
+          ⬡ Pneuma × Agent Network · 其他 Soul 已联动
+        </div>
+        <div className="text-[12px] text-ink-dim font-mono leading-relaxed">
+          本机 anet binding 当前指向 Soul #{status.binding?.soulTokenId}，
+          不是 #{soulId}。要切换：先在 active wallet 切到 #{soulId} 的持有人，
+          然后跑 <code className="text-cyan">pneuma anet bootstrap</code>。
+        </div>
+      </section>
+    );
+  }
+
+  // 没绑：教用户怎么绑
+  return (
+    <section className="surface px-5 py-4 my-6 border border-magenta/30 bg-magenta/5">
+      <div className="flex items-baseline justify-between gap-4 mb-1">
+        <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-magenta">
+          ⬡ Pneuma × Agent Network · 尚未联动
+        </div>
+        <span className="inline-flex items-center gap-2 text-[10px] font-mono text-ink-dim">
+          <span className={`w-1.5 h-1.5 rounded-full ${daemonDot}`} />
+          anet daemon ·{" "}
+          {status.anetDaemon === "connected"
+            ? "running"
+            : status.anetDaemon === "loading"
+            ? "checking…"
+            : status.anetDaemon === "not_running"
+            ? "not running"
+            : "not installed"}
+        </span>
+      </div>
+      <div className="text-[12px] text-ink-dim font-mono leading-relaxed">
+        把这条 Soul 跟 anet did:key 绑定，让你的 anet 任务收据能镜像成链上
+        attestation：
+        <pre className="mt-2 text-cyan text-[11px] bg-bg/50 px-3 py-2 rounded border border-border/60 overflow-x-auto">{`pneuma anet bootstrap                # 绑定 did:key ↔ Soul #${soulId}
+pneuma anet register-x402-skill       # 在 anet ANS 注册支付能力
+pneuma anet mirror <anet-task-id>     # 把 KREC 镜像成链上 attestation`}</pre>
+      </div>
+    </section>
   );
 }
