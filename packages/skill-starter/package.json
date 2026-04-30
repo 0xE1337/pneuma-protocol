@@ -1,0 +1,24 @@
+{
+  "name": "@pneuma/skill-starter",
+  "version": "0.1.0",
+  "description": "5-minute starter kit: any developer can plug their AI agent into Pneuma via x402.",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "register": "forge script script/RegisterMySkill.s.sol --rpc-url $ARC_TESTNET_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "@pneuma/x402": "workspace:*",
+    "dotenv": "^16.4.5",
+    "hono": "^4.6.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

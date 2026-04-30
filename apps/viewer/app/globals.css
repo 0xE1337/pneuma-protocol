@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply bg-cream text-ink font-mono;
+    background:
+      radial-gradient(at 0% 0%, rgb(255 228 208 / 0.6) 0%, transparent 50%),
+      radial-gradient(at 100% 100%, rgb(251 229 200 / 0.5) 0%, transparent 50%),
+      rgb(250 246 238);
+    background-attachment: fixed;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: rgb(184 61 30 / 0.2);
+    color: rgb(58 36 24);
+  }
+}
+
+@layer components {
+  .surface {
+    @apply bg-cream-warm/60 border border-amber/25 rounded-lg;
+  }
+  .surface-paper {
+    @apply bg-paper border border-amber/25 rounded-xl;
+    box-shadow: 0 16px 48px -16px rgb(232 117 74 / 0.3);
+  }
+  .surface-warm {
+    @apply bg-cream-warm border border-amber/40 rounded-lg;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md
+           text-sm font-medium tracking-tight
+           transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-amber-deep text-paper hover:bg-amber;
+    box-shadow: 0 4px 12px -4px rgb(184 61 30 / 0.4);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 8px 24px -6px rgb(184 61 30 / 0.5);
+  }
+
+  .input {
+    @apply w-full px-4 py-3 rounded-md bg-paper border border-amber/30
+           text-ink placeholder:text-ink-faint
+           focus:outline-none focus:border-amber-deep transition-all duration-200;
+  }
+  .input:focus {
+    box-shadow: 0 0 0 3px rgb(184 61 30 / 0.15);
+  }
+
+  .label {
+    @apply block text-[10px] uppercase tracking-[0.13em] text-ink-dim mb-2 font-mono;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full
+           bg-cream-warm/80 text-amber-deep border border-amber/40
+           text-[11px] font-mono uppercase tracking-[0.13em];
+  }
+
+  .stat-card {
+    @apply bg-cream-warm border border-amber/30 rounded-lg p-4 flex flex-col items-center gap-1;
+  }
+  .stat-value {
+    @apply text-3xl font-mono font-semibold text-amber-deep;
+  }
+  .stat-label {
+    @apply text-[10px] uppercase tracking-[0.13em] text-ink-dim font-mono;
+  }
+}

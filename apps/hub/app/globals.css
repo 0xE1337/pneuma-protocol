@@ -1,0 +1,746 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────
+ *  Fonts — loaded via next/font in layout.tsx (zero-CLS, self-hosted):
+ *    --font-nunito       (Nunito, 400-900)        — island body / button
+ *    --font-noto-sans-sc (Noto Sans SC, 400-700)  — island 中文 fallback
+ *    --font-zen-maru     (Zen Maru Gothic, 400-700) — island 标题手写感
+ *    --font-geist-sans / --font-geist-mono         — cyber-soul 原字体栈
+ * ──────────────────────────────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────────────────────────────
+ *  Theme tokens — CSS variables drive both Tailwind colors and inline CSS
+ *  Switch by setting `data-theme="island" | "dark"` on <html>
+ *  (ThemeProvider 控制).
+ *
+ *  色彩选择策略：
+ *    - island (default) = warm parchment + mint teal accent —— V6 micro-society
+ *      外壳；Animal-Crossing-inspired，演示日首屏即温暖社区视觉
+ *    - dark              = cyber-soul violet void —— 协议数据观感，开发者视图
+ *
+ *  历史：原有第三态 light (warm paper) 已于 2026-04-30 移除，让切换决策更直接。
+ * ──────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Dark palette (cyber-soul violet void) */
+  --color-bg: 10 10 10;
+  --color-elevated: 19 19 31;
+  --color-border: 34 34 51;
+  --color-ink: 255 255 255;
+  --color-ink-dim: 161 161 161;
+  --color-ink-faint: 115 115 130;
+  --color-soul: 88 44 255;
+  --color-soul-soft: 123 88 255;
+  --color-magenta: 191 64 255;
+  --color-cyan: 0 242 255;
+  --color-grain-base: 255 255 255; /* light grain on dark bg */
+  --color-edge: 10 10 10;          /* receipt edge bg matches body */
+
+  color-scheme: dark;
+}
+
+/* light theme block 已于 2026-04-30 移除 —— 二态切换 island ↔ dark */
+
+[data-theme="island"] {
+  /* Island palette — Animal-Crossing-inspired warm parchment + mint accent
+     色板严格对齐 animal-island-ui DESIGN_PROMPT.md（颗粒度到像素） */
+  --color-bg: 248 248 240;        /* #f8f8f0 warm parchment */
+  --color-elevated: 247 243 223;  /* card / modal — slightly warmer */
+  --color-border: 196 184 158;    /* #c4b89e */
+  --color-ink: 121 79 39;         /* #794f27 主棕（标题/sidebar header） */
+  --color-ink-dim: 114 93 66;     /* #725d42 body text */
+  --color-ink-faint: 159 146 125; /* #9f927d secondary */
+  --color-soul: 25 200 185;       /* #19c8b9 mint teal — island primary accent */
+  --color-soul-soft: 61 212 198;  /* #3dd4c6 mint hover */
+  --color-magenta: 224 90 90;     /* #e05a5a status error/danger */
+  --color-cyan: 25 200 185;       /* 与 soul 同 mint，让 cyan utility 也吃 mint */
+  --color-grain-base: 121 79 39;  /* warm brown grain on parchment */
+  --color-edge: 248 248 240;
+
+  /* Island-only tokens (用于 pill button 的 3D 按钮压感等 island 专属视觉) */
+  --island-shadow-rest: #bdaea0;     /* 按钮静态底部阴影色 */
+  --island-shadow-deep: #5a9e1e;     /* switch ON 阴影色（绿） */
+  --island-focus-yellow: #ffcc00;    /* input focus 黄边（不是蓝） */
+  --island-success-green: #6fba2c;   /* status 成功 */
+  --island-warning-yellow: #f5c31c;  /* status 警告 */
+
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-bg text-ink font-mono;
+    background-color: rgb(var(--color-bg));
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: background-color 250ms ease, color 250ms ease;
+  }
+
+  /* Island 主题切到 Nunito + 中文系统字体 fallback —— body 整体走暖圆 sans。
+     页面里显式 className="font-mono" 仍走 Geist Mono（CyberChip / hash / address 等）。
+     这是 island-demo 已经验证过的"外壳暖 sans + 内核 cyber mono"双层视觉。 */
+  [data-theme="island"] body {
+    font-family:
+      var(--font-nunito),
+      var(--font-zen-maru),
+      -apple-system,
+      BlinkMacSystemFont,
+      "PingFang SC",
+      "Hiragino Sans GB",
+      "Microsoft YaHei",
+      sans-serif;
+    letter-spacing: 0.005em;
+  }
+
+  /* Island 主题下"标题字" — 给 h1/h2 用 Zen Maru Gothic 圆润手写感
+     原 cyber 主题的 .display 仍然 mono，互不干扰 */
+  [data-theme="island"] :where(h1, h2):not([class*="font-mono"]) {
+    font-family:
+      var(--font-zen-maru),
+      var(--font-nunito),
+      -apple-system,
+      "PingFang SC",
+      sans-serif;
+    letter-spacing: 0;
+  }
+
+  ::selection {
+    background: rgb(var(--color-soul) / 0.4);
+    color: rgb(var(--color-ink));
+  }
+
+  /* Scroll bar — themed */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--color-bg));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-border));
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--color-soul) / 0.5);
+  }
+
+  /* Grain noise overlay — 全局氛围，拉开同赛道平铺背景
+     dark mode 用 light grain (mix-blend-mode: overlay)
+     light mode 用 dark grain，靠 var(--color-grain-base) 切 */
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.045;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 240px 240px;
+    background-repeat: repeat;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grain-overlay {
+      opacity: 0.02;
+    }
+  }
+}
+
+@layer components {
+  /* Surfaces */
+  .surface {
+    @apply bg-elevated border border-border/100 rounded-lg;
+    transition: border-color 250ms cubic-bezier(0.16, 1, 0.3, 1),
+                transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .surface:hover {
+    border-color: rgb(var(--color-soul) / 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px -16px rgb(var(--color-soul) / 0.5);
+  }
+
+  .surface-glow {
+    position: relative;
+    border-radius: 0.5rem;
+    background: rgb(var(--color-elevated));
+    border: 1px solid rgb(var(--color-soul) / 0.4);
+    box-shadow: 0 16px 60px -16px rgb(var(--color-soul) / 0.4);
+    transition: box-shadow 300ms ease;
+  }
+  .surface-glow::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgb(var(--color-soul) / 0.65) 60deg,
+      rgb(var(--color-cyan) / 0.55) 120deg,
+      rgb(var(--color-magenta) / 0.55) 180deg,
+      transparent 240deg,
+      transparent 360deg
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 300ms ease;
+    animation: conic-spin 5s linear infinite;
+    animation-play-state: paused;
+  }
+  .surface-glow:hover::before {
+    opacity: 1;
+    animation-play-state: running;
+  }
+  .surface-glow:hover {
+    box-shadow: 0 24px 80px -20px rgb(var(--color-soul) / 0.65);
+  }
+
+  @keyframes conic-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .surface-glow::before {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
+  .surface-gradient {
+    border-radius: 0.5rem;
+    border: 1px solid rgb(var(--color-soul) / 0.5);
+    background:
+      linear-gradient(135deg,
+        rgb(var(--color-soul) / 0.14) 0%,
+        rgb(var(--color-elevated)) 50%,
+        rgb(var(--color-magenta) / 0.1) 100%);
+    box-shadow: 0 16px 60px -16px rgb(var(--color-soul) / 0.4);
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md
+           text-sm font-medium tracking-tight
+           transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-soul text-ink hover:bg-soul-soft;
+    color: rgb(255 255 255); /* 白字在 violet 上始终可读 */
+    box-shadow: 0 8px 24px -8px rgb(var(--color-soul) / 0.5);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 12px 36px -10px rgb(var(--color-soul) / 0.7);
+  }
+  .btn-ghost {
+    @apply btn border border-ink/30 bg-transparent text-ink hover:bg-ink/5 hover:border-ink/50;
+  }
+  .btn-outline {
+    @apply btn border border-border bg-elevated text-ink hover:border-soul/60 hover:bg-soul/5;
+  }
+
+  /* Form */
+  .input {
+    @apply w-full px-4 py-3 rounded-md bg-bg border border-border
+           text-ink placeholder:text-ink-faint
+           focus:outline-none focus:border-soul/60 transition-all duration-200;
+    box-shadow: inset 0 1px 0 0 rgb(var(--color-ink) / 0.04);
+  }
+  .input:focus {
+    box-shadow:
+      inset 0 1px 0 0 rgb(var(--color-ink) / 0.04),
+      0 0 0 3px rgb(var(--color-soul) / 0.15);
+  }
+  .label {
+    @apply block text-[10px] uppercase tracking-[0.13em] text-ink-dim mb-2 font-mono;
+  }
+
+  /* Tags / badges */
+  .tag {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono
+           uppercase tracking-[0.13em] bg-soul/15 text-magenta border border-soul/30;
+  }
+  .tag-cyan {
+    @apply tag bg-cyan/15 text-cyan border-cyan/40;
+  }
+  .tag-soul {
+    @apply tag bg-soul/15 text-magenta border-soul/40;
+  }
+
+  .pill-live {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full
+           bg-soul/15 text-magenta border border-soul/40
+           text-[11px] font-mono uppercase tracking-[0.13em];
+  }
+  .pill-live::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 99px;
+    background: rgb(var(--color-cyan));
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  /* Stats */
+  .stat-card {
+    @apply surface p-5 flex flex-col gap-1;
+  }
+  .stat-value {
+    @apply text-3xl font-mono font-semibold tracking-tight text-ink;
+  }
+  .stat-label {
+    @apply text-[10px] uppercase tracking-[0.13em] text-ink-dim font-mono;
+  }
+
+  /* Logo mark */
+  .logo-mark {
+    @apply w-7 h-7 rounded-md;
+    background: linear-gradient(135deg, rgb(var(--color-soul)), rgb(var(--color-magenta)));
+    box-shadow: 0 0 16px -2px rgb(var(--color-soul) / 0.6);
+  }
+
+  /* Decorative neon streaks (used in landing/run/profile heroes) */
+  .neon-streak {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 99px;
+    filter: blur(48px);
+    opacity: 0.45;
+    z-index: 0;
+  }
+  .neon-streak[data-color="violet"]  { background: rgb(var(--color-soul)); }
+  .neon-streak[data-color="magenta"] { background: rgb(var(--color-magenta)); }
+  .neon-streak[data-color="cyan"]    { background: rgb(var(--color-cyan)); }
+
+  /* Cinematic display utility for big headlines */
+  .display {
+    @apply font-mono font-semibold tracking-tight text-ink;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+  }
+
+  /*
+   * receipt-card / receipt-edge —— "Proof-of-Spend" 收据卡视觉
+   * dark = 深紫卡片；light = 暖白卡片
+   */
+  .receipt-card {
+    position: relative;
+    background: rgb(var(--color-elevated));
+    border: 1px solid rgb(var(--color-border));
+    border-radius: 0.5rem;
+    transition:
+      border-color 250ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .receipt-card[data-accent="cyan"]    { border-color: rgb(var(--color-cyan) / 0.25); }
+  .receipt-card[data-accent="magenta"] { border-color: rgb(var(--color-magenta) / 0.3); }
+  .receipt-card[data-accent="soul"]    { border-color: rgb(var(--color-soul) / 0.3); }
+  .receipt-card:hover {
+    border-color: rgb(var(--color-soul) / 0.55);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px -16px rgb(var(--color-soul) / 0.5);
+  }
+
+  .receipt-edge {
+    display: block;
+    height: 8px;
+    background-image: radial-gradient(
+      circle,
+      rgb(var(--color-edge)) 0,
+      rgb(var(--color-edge)) 2px,
+      transparent 2.5px
+    );
+    background-size: 12px 8px;
+    background-repeat: repeat-x;
+    background-position: center;
+  }
+
+  /* surface-paper / surface-warm — 兼容前端某些页面的暖色 surface 引用
+     dark mode 跟 surface 同；light mode 用 cream paper bg */
+  .surface-paper {
+    @apply surface;
+  }
+  .surface-warm {
+    @apply surface;
+  }
+  /* amber-deep utility — 部分页面 import 了这个 token (如 viewer 风格)
+     这里给 hub 一个 fallback：跟 magenta 同义 */
+  .text-amber-deep { color: rgb(var(--color-magenta)); }
+  .border-amber-deep { border-color: rgb(var(--color-magenta) / 0.6); }
+  .bg-amber-deep { background-color: rgb(var(--color-magenta)); }
+
+  /* ════════════════════════════════════════════════════════════════════
+   * Island theme utilities — Animal-Crossing-inspired
+   * 仅在 [data-theme="island"] 下生效；其他主题下要么静默要么走原 cyber 视觉
+   * 严格对齐 animal-island-ui DESIGN_PROMPT.md 像素规范
+   * ════════════════════════════════════════════════════════════════════ */
+
+  /* island-shell —— 整页 wrapper：parchment 底色 + 顶部 Nunito 字体栈
+     用法：<main className="island-shell"> 或在 page 顶层 div 加这个类 */
+  .island-shell {
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-ink-dim));
+    min-height: 100vh;
+  }
+
+  /* island-pill —— pill 形按钮（按 DESIGN_PROMPT.md height 45px middle 规格）
+     视觉关键：底部 5px 静态阴影 = "任天堂按钮压下去" 触感
+     hover 上浮 1px / active 下压 2px，对齐 Animal Crossing 触觉反馈 */
+  .island-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 45px;
+    padding: 0 20px;
+    border-radius: 50px;
+    border: 2px solid rgb(var(--color-border));
+    background: rgb(var(--color-elevated));
+    color: rgb(var(--color-ink));
+    font-family: var(--font-nunito), sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 5px 0 0 var(--island-shadow-rest, #bdaea0);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+  }
+  .island-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  .island-pill:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  .island-pill[data-variant="primary"] {
+    background: rgb(var(--color-soul));
+    color: #fff;
+    border-color: rgb(var(--color-soul));
+  }
+  .island-pill[data-variant="primary"]:hover {
+    background: rgb(var(--color-soul-soft));
+  }
+  .island-pill[data-size="small"] {
+    height: 32px;
+    padding: 0 16px;
+    font-size: 12px;
+    border-radius: 12px;
+    box-shadow: 0 3px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  .island-pill[data-size="small"]:hover {
+    box-shadow: 0 4px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  .island-pill[data-size="small"]:active {
+    box-shadow: 0 1px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  /* 非 island 主题下的 fallback —— 保留视觉但去掉 3D 按压效果 */
+  [data-theme="dark"] .island-pill {
+    box-shadow: none;
+  }
+
+  /* island-card —— 卡片 (border-radius: 20px 标准卡)
+     DESIGN_PROMPT.md: box-shadow 0 4px 10px rgba(107, 92, 67, 0.42)
+     对齐 island demo 的卡片视觉 */
+  .island-card {
+    background: rgb(var(--color-elevated));
+    border: 2px solid rgb(var(--color-border));
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 10px rgba(107, 92, 67, 0.18);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .island-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(114, 93, 66, 0.25);
+  }
+  /* 非 island 主题下回落到现有 .surface 视觉 */
+  [data-theme="dark"] .island-card {
+    border-radius: 0.5rem;
+    border-width: 1px;
+    box-shadow: none;
+  }
+
+  /* island-eyebrow —— 小标题（"V6.0.1 — SHIPPING NOW" 这种 eyebrow text） */
+  .island-eyebrow {
+    font-family: var(--font-nunito), sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgb(var(--color-soul));
+  }
+
+  /* island-title —— 大标题，配合 Zen Maru Gothic 圆润手写感 */
+  .island-title {
+    font-family: var(--font-zen-maru), var(--font-nunito), sans-serif;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700;
+    color: rgb(var(--color-ink));
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+
+  /* cyber-chip —— 链上数据 mono accent（外壳 island 内核 cyber 双层抓手）
+     在任何主题下都强制走 mono，让"地址 / hash / 金额"始终保持协议数据观感 */
+  .cyber-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 2px 8px;
+    background: rgb(var(--color-soul) / 0.12);
+    color: rgb(var(--color-soul));
+    border: 1px solid rgb(var(--color-soul) / 0.3);
+    border-radius: 4px;
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .cyber-chip[data-accent="magenta"] {
+    background: rgb(var(--color-magenta) / 0.10);
+    color: rgb(var(--color-magenta));
+    border-color: rgb(var(--color-magenta) / 0.3);
+  }
+  .cyber-chip[data-accent="neutral"] {
+    background: rgb(var(--color-ink) / 0.08);
+    color: rgb(var(--color-ink-dim));
+    border-color: rgb(var(--color-ink) / 0.18);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+   * Island override — 覆盖所有 cyber 共享类，让 landing / commons / mint /
+   * skills 等已有页面在 [data-theme="island"] 下零页面级改动就拿到 island 视觉
+   *
+   * 设计哲学：把 cyber-soul 的"协议数据观感"映射到 island 的"温暖社区"语义
+   *   - violet glow → mint teal warm shadow
+   *   - sharp 0.5rem corner → 20px rounded
+   *   - magenta accent → mint or warm peach
+   *   - cinematic neon → softer Animal-Crossing palette
+   * ════════════════════════════════════════════════════════════════════ */
+
+  /* Hero / section bg neon streaks 在 island 下完全隐藏 —— 不和谐 */
+  [data-theme="island"] .neon-streak {
+    display: none;
+  }
+
+  /* Surface 卡片 island 化：20px 圆角 + 米色卡 + 4px shadow + hover 上浮 4px
+     按 DESIGN_PROMPT.md "Card hover: translateY(-4px) — gentle float" */
+  [data-theme="island"] .surface,
+  [data-theme="island"] .surface-paper,
+  [data-theme="island"] .surface-warm {
+    border-radius: 20px;
+    border: 2px solid rgb(var(--color-border));
+    background: rgb(var(--color-elevated));
+    box-shadow: 0 4px 12px rgba(107, 92, 67, 0.12);
+  }
+  [data-theme="island"] .surface:hover {
+    border-color: rgb(var(--color-soul) / 0.6);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(114, 93, 66, 0.2);
+  }
+
+  /* surface-glow island 版：去 violet conic-gradient，换成 mint 厚边 + 暖阴影 */
+  [data-theme="island"] .surface-glow {
+    border-radius: 20px;
+    border: 2.5px solid rgb(var(--color-soul) / 0.4);
+    background: rgb(var(--color-elevated));
+    box-shadow: 0 8px 24px rgba(25, 200, 185, 0.15);
+  }
+  [data-theme="island"] .surface-glow::before {
+    display: none;
+  }
+  [data-theme="island"] .surface-glow:hover {
+    border-color: rgb(var(--color-soul) / 0.7);
+    box-shadow: 0 12px 32px rgba(25, 200, 185, 0.25);
+  }
+
+  /* surface-gradient island 版：从 violet→magenta 改成 mint→peach 暖色 gradient */
+  [data-theme="island"] .surface-gradient {
+    border-radius: 20px;
+    border: 2px solid rgb(var(--color-soul) / 0.35);
+    background: linear-gradient(
+      135deg,
+      rgba(25, 200, 185, 0.08) 0%,
+      rgb(var(--color-elevated)) 50%,
+      rgba(225, 140, 111, 0.10) 100%
+    );
+    box-shadow: 0 8px 20px rgba(107, 92, 67, 0.15);
+  }
+
+  /* Buttons —— pill 化 + 任天堂按钮压感阴影 */
+  [data-theme="island"] .btn-primary {
+    border-radius: 50px;
+    height: 45px;
+    padding: 0 24px;
+    background: rgb(var(--color-soul));
+    color: #fff;
+    font-family: var(--font-nunito), sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 5px 0 0 var(--island-shadow-rest, #bdaea0);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  [data-theme="island"] .btn-primary:hover:not(:disabled) {
+    background: rgb(var(--color-soul-soft));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  [data-theme="island"] .btn-primary:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  [data-theme="island"] .btn-ghost {
+    border-radius: 50px;
+    height: 45px;
+    padding: 0 24px;
+    border: 2px solid rgb(var(--color-border));
+    background: rgb(var(--color-elevated));
+    color: rgb(var(--color-ink));
+    font-family: var(--font-nunito), sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 5px 0 0 var(--island-shadow-rest, #bdaea0);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  [data-theme="island"] .btn-ghost:hover {
+    background: rgba(25, 200, 185, 0.08);
+    border-color: rgb(var(--color-soul) / 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 0 0 var(--island-shadow-rest, #bdaea0);
+  }
+  [data-theme="island"] .btn-outline {
+    border-radius: 50px;
+    border: 2px solid rgb(var(--color-border));
+    background: rgb(var(--color-elevated));
+    color: rgb(var(--color-ink));
+  }
+
+  /* pill-live —— Live 状态徽章 island 化：mint 胶囊 + 棕字 */
+  [data-theme="island"] .pill-live {
+    background: rgba(25, 200, 185, 0.15);
+    color: rgb(var(--color-soul));
+    border: 2px solid rgb(var(--color-soul) / 0.5);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-family: var(--font-nunito), sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  [data-theme="island"] .pill-live::before {
+    background: rgb(var(--color-soul));
+  }
+
+  /* tag / tag-soul / tag-cyan —— 在 island 下走 mint accent 但保留 mono mono */
+  [data-theme="island"] .tag,
+  [data-theme="island"] .tag-soul {
+    background: rgba(25, 200, 185, 0.12);
+    color: rgb(var(--color-soul));
+    border-color: rgb(var(--color-soul) / 0.35);
+    border-radius: 6px;
+  }
+  [data-theme="island"] .tag-cyan {
+    background: rgba(25, 200, 185, 0.12);
+    color: rgb(var(--color-soul));
+    border-color: rgb(var(--color-soul) / 0.35);
+    border-radius: 6px;
+  }
+
+  /* display headline —— 在 island 下从 mono 切到 Zen Maru Gothic 圆润字体
+     letter-spacing 收紧，line-height 留 1.15 让大字呼吸 */
+  [data-theme="island"] .display {
+    font-family: var(--font-zen-maru), var(--font-nunito), sans-serif;
+    font-weight: 700;
+    color: rgb(var(--color-ink));
+    letter-spacing: 0;
+    line-height: 1.15;
+  }
+
+  /* text-magenta / text-cyan 在 island 下重定义为 mint accent
+     这俩 utility class 在 page.tsx 里大量用作 "section eyebrow" 的强调色 */
+  [data-theme="island"] .text-magenta {
+    color: rgb(var(--color-soul));
+  }
+  [data-theme="island"] .text-cyan {
+    color: rgb(var(--color-soul));
+  }
+  [data-theme="island"] .text-soul-soft {
+    color: rgb(var(--color-soul-soft));
+  }
+
+  /* label —— 小 eyebrow 文字，island 下保留 uppercase 但用 brown ink */
+  [data-theme="island"] .label {
+    font-family: var(--font-nunito), sans-serif;
+    color: rgb(var(--color-ink-faint));
+    letter-spacing: 0.13em;
+    font-weight: 700;
+  }
+
+  /* Browser chrome mockup（landing 页 ProductMockup 顶部）的灰色 toolbar
+     在 island 下变成米色 + brown text，跟整页协调 */
+  [data-theme="island"] .surface-glow .border-b {
+    border-color: rgb(var(--color-border));
+    background: rgba(247, 243, 223, 0.6);
+  }
+
+  /* receipt-card —— Proof-of-Spend 收据卡 island 化：圆角 + 米色 + 4px shadow */
+  [data-theme="island"] .receipt-card {
+    border-radius: 16px;
+    border-width: 2px;
+    box-shadow: 0 4px 12px rgba(107, 92, 67, 0.12);
+  }
+  [data-theme="island"] .receipt-card[data-accent="cyan"] {
+    border-color: rgb(var(--color-soul) / 0.4);
+  }
+  [data-theme="island"] .receipt-card[data-accent="magenta"] {
+    border-color: rgba(225, 140, 111, 0.5);  /* 暖 peach 替代 cyber magenta */
+  }
+
+  /* Logo mark 在 island 下已在 Navbar.tsx scoped style 里处理（mint gradient + 12px radius）
+     这里只兜底全局 .logo-mark 引用 */
+  [data-theme="island"] .logo-mark {
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgb(var(--color-soul)), rgb(var(--color-soul-soft)));
+  }
+
+  /* input island 化：pill 形 + 3px brown bottom shadow + 黄色 focus（不是蓝） */
+  [data-theme="island"] .input {
+    border-radius: 50px;
+    border: 2.5px solid rgb(var(--color-border));
+    background: rgb(var(--color-elevated));
+    color: rgb(var(--color-ink));
+    padding: 12px 22px;
+    box-shadow: 0 3px 0 0 #d4c9b4;
+    font-family: var(--font-nunito), sans-serif;
+  }
+  [data-theme="island"] .input:focus {
+    border-color: var(--island-focus-yellow, #ffcc00);
+    box-shadow: 0 3px 0 0 #e0b800, 0 0 0 3px rgba(255, 204, 0, 0.15);
+  }
+
+  /* DAppChip & 其他 inline-style border 元素的"颜色 ring" 兜不到，
+     这些在 page.tsx 里写死了 colorRing="rgb(88 44 255 / 0.6)" 等。
+     接下来 S2 改 page.tsx 时再单独切到 mint。 */
+}

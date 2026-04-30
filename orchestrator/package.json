@@ -1,0 +1,29 @@
+{
+  "name": "@pneuma/orchestrator",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./discovery": "./src/discovery.ts",
+    "./planner": "./src/planner.ts",
+    "./executor": "./src/executor.ts",
+    "./aggregator": "./src/aggregator.ts",
+    "./llm": "./src/llm.ts"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@pneuma/x402": "workspace:*",
+    "viem": "^2.21.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "chainId": 5042002,
+  "chainName": "Arc Testnet",
+  "rpc": "https://rpc.testnet.arc.network",
+  "explorer": "https://testnet.arcscan.app",
+  "deployedAt": "2026-04-29",
+  "deployer": "0xadC40c12caDE96d5c47A9e986eB6557453E1d594",
+  "version": "1.0.0",
+  "paymentToken": {
+    "symbol": "USDC",
+    "address": "0x3600000000000000000000000000000000000000",
+    "decimals": 6,
+    "source": "Circle native USDC on Arc — same address as native gas, accessed via standard ERC-20 interface (6 decimals)",
+    "faucet": "https://faucet.circle.com"
+  },
+  "contracts": {
+    "BudgetController": "0xdCF2B4Bd90aCf81d42C163D2ce0f0e16eFcE6d8c",
+    "SoulAccountImpl": "0xb7A7b7a57D0103DBFBCBE8d91f08E8269eA50c50",
+    "PneumaAttestation": "0xdCb29F9172D4BE8d26e71062b3E48C7cf528DD38",
+    "SoulNFT": "0x5b516Cdc56910C07C9b34C2d56b31422da97A959",
+    "SkillRegistry": "0x4Ab33E9417FCb0D51ef4F9e989057BaD97587a7f",
+    "PneumaTimelock": "0x68b8790938C21950506f41Aa071705eC959C6e0B",
+    "PneumaCommons": "0x201C873F3f3862e0936b026Fb618Ed06f8aA44Cb",
+    "ReputationGraph": "0x94fE0a0C2427900F9ca82875dF8f672ec2ca3330"
+  },
+  "external": {
+    "ERC6551Registry": "0x000000006551c19487814612e58FE06813775758",
+    "Usdc": "0x3600000000000000000000000000000000000000"
+  },
+  "pendingDeployment": {
+    "PneumaCourt": "V6.1 sprint — multi-juror dispute, code ready in contracts/src/PneumaCourt.sol but not yet on Arc Testnet"
+  },
+  "features": {
+    "erc8004IdentityRegistry": true,
+    "multiRaterAttestation": true,
+    "callerReverseRating": true,
+    "raterRoleEnum": ["PROVIDER", "CALLER", "JUROR", "SYSTEM"],
+    "ownershipBoundaryAttestation": true,
+    "antiLaunderingDefense": true,
+    "timelockGuardedGovernance": true,
+    "timelockMinDelay": "2 days",
+    "timelockMaxDelay": "30 days",
+    "providerStakeAndSlash": true,
+    "slaTimeoutClaimable": true,
+    "revokeAttestationLinkedToSlash": true,
+    "perTbaDailyBudgetCap": true,
+    "nativeUsdcSettlement": true,
+    "noSelfIssuedToken": true,
+    "onChainFreeTextComment": true,
+    "commentMaxLength": 280,
+    "pneumaCommonsPublishCite": true,
+    "reputationGraphEndorse": true,
+    "v5PerByteRefundPricing": true
+  }
+}

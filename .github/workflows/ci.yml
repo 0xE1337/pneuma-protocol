@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 让并发 PR push 时取消旧 run，避免账单浪费
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    name: Solidity (Foundry)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: forge build
+        run: forge build --sizes
+
+      - name: forge fmt --check
+        run: forge fmt --check
+
+      - name: forge test
+        run: forge test -vv
+
+      - name: forge coverage (informational)
+        run: forge coverage --report summary || true
+
+  apps:
+    name: TypeScript (apps + packages)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages (x402, skill-starter, cli, orchestrator)
+        run: pnpm -r --filter='!./contracts' --filter='!./apps/*' build
+
+      - name: Build apps (hub + viewer)
+        env:
+          # CI 用占位地址 + 链上常量，仅用于 next build 编译
+          NEXT_PUBLIC_CHAIN_ID: 5042002
+          NEXT_PUBLIC_CHAIN_RPC: https://rpc.testnet.arc.network
+          NEXT_PUBLIC_CHAIN_EXPLORER: https://testnet.arcscan.app
+          NEXT_PUBLIC_USDC_ADDRESS: "0x3600000000000000000000000000000000000000"
+          NEXT_PUBLIC_BUDGET_CONTROLLER_ADDRESS: "0x0000000000000000000000000000000000000001"
+          NEXT_PUBLIC_SOUL_ACCOUNT_IMPL: "0x0000000000000000000000000000000000000002"
+          NEXT_PUBLIC_PNEUMA_ATTESTATION_ADDRESS: "0x0000000000000000000000000000000000000003"
+          NEXT_PUBLIC_SOUL_NFT_ADDRESS: "0x0000000000000000000000000000000000000004"
+          NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS: "0x0000000000000000000000000000000000000005"
+          NEXT_PUBLIC_PNEUMA_TIMELOCK_ADDRESS: "0x0000000000000000000000000000000000000006"
+          NEXT_PUBLIC_ERC6551_REGISTRY: "0x000000006551c19487814612e58FE06813775758"
+        run: |
+          pnpm --filter @pneuma/hub build
+          pnpm --filter @pneuma/viewer build

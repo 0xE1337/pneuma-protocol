@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.vercel/
+.turbo/
+
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/broadcast/*/dry-run/
+contracts/lib/
+!contracts/lib/.gitkeep
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Temp
+*.tmp
+*.cache
+
+# Claude Code IDE config (private dev tooling — agents, skills, sessions, cache)
+.claude/
+
+# Sed/manual edit backups
+*.bak
+*.tsbuildinfo

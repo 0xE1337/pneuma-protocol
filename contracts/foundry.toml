@@ -1,0 +1,32 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc = "0.8.26"
+optimizer = true
+optimizer_runs = 200
+# 启用 via_ir：comment 字段加入后 _attest 函数参数 + 局部变量超出 EVM 16 槽栈深，
+# via_ir 让编译器走 Yul intermediate representation 通过 SSA 重排优化解决。
+# 副作用：编译变慢约 3x，但运行时 gas 一般持平或更优。
+via_ir = true
+gas_reports = ["*"]
+fs_permissions = [{ access = "read-write", path = "./deployments" }]
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
+quote_style = "double"
+number_underscore = "thousands"
+
+[rpc_endpoints]
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+arc_testnet = "${ARC_TESTNET_RPC_URL}"
+sepolia = "${SEPOLIA_RPC_URL}"
+
+[etherscan]
+base_sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
+sepolia = { key = "${ETHERSCAN_API_KEY}" }

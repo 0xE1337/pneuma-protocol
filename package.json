@@ -1,0 +1,33 @@
+{
+  "name": "pneuma",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "USDC settlement + on-chain receipts for AI agents. Compatible with Agent Network mesh (agentnetwork.org.cn) — adds verifiable payment and cross-platform reputation that survives daemon shutdown.",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "pnpm -r --filter='!./contracts' build",
+    "dev": "pnpm -r --filter='!./contracts' --parallel dev",
+    "lint": "pnpm -r --filter='!./contracts' lint",
+    "test": "pnpm -r --filter='!./contracts' test",
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "cd contracts && forge test -vv",
+    "contracts:deploy:arc": "cd contracts && forge script script/Deploy.s.sol --rpc-url $ARC_TESTNET_RPC_URL --broadcast",
+    "contracts:deploy:base-sepolia": "cd contracts && forge script script/Deploy.s.sol --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast --verify",
+    "smoke": "bash scripts/smoke-test.sh",
+    "setup": "bash scripts/setup.sh"
+  },
+  "devDependencies": {
+    "@pneuma/x402": "workspace:*",
+    "dotenv": "^16.4.5",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3",
+    "viem": "^2.21.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
