@@ -86,14 +86,45 @@ async function fetchSouls(
   publicClient: PublicClient,
   address: Address,
 ): Promise<SoulSummary[]> {
-  // Step 1: getLogs 拉 Transfer 事件 (to=address)
-  // fromBlock=0n 在 Arc Testnet 块数较少时 OK；生产应缓存或加 fromBlock 启发式
-  const logs = await publicClient.getLogs({
-    address: SOUL_NFT,
-    event: TRANSFER_EVENT,
-    args: { to: address },
-    fromBlock: 0n,
-  });
+  // Step 1: getLogs 拉 Transfer 事件 (to=address) —— 分块拉
+  // Arc Testnet RPC 限制 eth_getLogs 单次最多 10000 blocks，fromBlock=0n 必撞限制。
+  // 跟 useOwnershipTimeline 同口径：从当前块往回 ~19000 blocks（最近 ~42 小时），
+  // 每段 9500 blocks 串行拉。hackathon 期 Soul 都是近期铸的，覆盖足够。
+  const CHUNK_SIZE = 9500n;
+  const HISTORY_BLOCK_RANGE = 19000n;
+  const latest = await publicClient.getBlockNumber();
+  const earliest =
+    latest > HISTORY_BLOCK_RANGE ? latest - HISTORY_BLOCK_RANGE : 0n;
+
+  // 用 array-of-arrays + flat 保留 TS 对 event-filtered Log 的类型推断
+  type ChunkType = Awaited<
+    ReturnType<typeof publicClient.getLogs<typeof TRANSFER_EVENT>>
+  >;
+  const chunks: ChunkType[] = [];
+  let cursor = earliest;
+  while (cursor <= latest) {
+    const toBlock =
+      cursor + CHUNK_SIZE > latest ? latest : cursor + CHUNK_SIZE;
+    try {
+      const chunk = await publicClient.getLogs({
+        address: SOUL_NFT,
+        event: TRANSFER_EVENT,
+        args: { to: address },
+        fromBlock: cursor,
+        toBlock,
+      });
+      chunks.push(chunk);
+    } catch (chunkErr) {
+      // 单 chunk 失败不阻塞整体，下一段继续
+      console.warn(
+        `[useMySouls] chunk ${cursor}-${toBlock} failed:`,
+        (chunkErr as Error).message,
+      );
+    }
+    cursor = toBlock + 1n;
+    if (cursor <= latest) await new Promise((r) => setTimeout(r, 100));
+  }
+  const logs = chunks.flat();
 
   // Step 2: 收集候选 tokenIds 并去重（同一 tokenId 可能多次进入此地址）
   const candidates = Array.from(

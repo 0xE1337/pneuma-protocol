@@ -18,7 +18,7 @@
  * 真实落到选中 Soul 的 TBA 上。
  */
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   useAccount,
@@ -146,12 +146,13 @@ function RunPageInner() {
     }
   }, [souls, selectedTokenId]);
 
-  // 链上读 skills 列表
+  // 链上读 skills 列表 —— 30s 间隔（skill 注册不频繁，没必要 8s 轮询）
+  // 8s 轮询在用户点击的瞬间常引发 wagmi 重新订阅 → 整页 re-render → 卡顿
   const { data: skillsData } = useReadContract({
     address: SKILL_REGISTRY,
     abi: SkillRegistryAbi,
     functionName: "listActiveSkills",
-    query: { refetchInterval: 8000 },
+    query: { refetchInterval: 30000 },
   });
   const skills = (skillsData ?? []) as readonly SkillRow[];
 
@@ -187,6 +188,17 @@ function RunPageInner() {
   const selectedSkill = useMemo(
     () => skills.find((s) => s.skillId === selectedSkillId) ?? null,
     [skills, selectedSkillId],
+  );
+
+  // 稳定的 click handler 引用 —— 跟 React.memo(SoulPick / SkillPick) 配合
+  // 让"点 A 不会让 B/C/D 卡片也重渲染"成立，消除 7+ 卡片 fullscan re-render 卡顿
+  const onPickSoul = useCallback(
+    (id: bigint) => setSelectedTokenId(id),
+    [],
+  );
+  const onPickSkill = useCallback(
+    (id: bigint) => setSelectedSkillId(id),
+    [],
   );
 
   // 当前 EOA 的 USDC 余额 + attestation count（直接显示，不挡演示路径）
@@ -446,7 +458,7 @@ function RunPageInner() {
                         key={s.tokenId.toString()}
                         soul={s}
                         selected={selectedTokenId === s.tokenId}
-                        onClick={() => setSelectedTokenId(s.tokenId)}
+                        onPick={onPickSoul}
                       />
                     ))}
                   </div>
@@ -494,7 +506,7 @@ function RunPageInner() {
                         key={sk.skillId.toString()}
                         skill={sk}
                         selected={selectedSkillId === sk.skillId}
-                        onClick={() => setSelectedSkillId(sk.skillId)}
+                        onPick={onPickSkill}
                       />
                     ))}
                   </div>
@@ -577,19 +589,20 @@ function ConnectPrompt() {
   );
 }
 
-function SoulPick({
+// React.memo + 稳定 onPick → 点击其它 Soul 不会让本卡重渲染
+const SoulPick = memo(function SoulPick({
   soul,
   selected,
-  onClick,
+  onPick,
 }: {
   soul: SoulSummary;
   selected: boolean;
-  onClick: () => void;
+  onPick: (id: bigint) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => onPick(soul.tokenId)}
       className={`w-full text-left p-3 rounded-md border transition-all ${
         selected
           ? "border-cyan bg-cyan/5"
@@ -613,16 +626,17 @@ function SoulPick({
       </div>
     </button>
   );
-}
+});
 
-function SkillPick({
+// React.memo + 稳定 onPick → 点击其它 Skill 不会让本卡重渲染
+const SkillPick = memo(function SkillPick({
   skill,
   selected,
-  onClick,
+  onPick,
 }: {
   skill: SkillRow;
   selected: boolean;
-  onClick: () => void;
+  onPick: (id: bigint) => void;
 }) {
   const tag =
     skill.category === "finance"
@@ -633,7 +647,7 @@ function SkillPick({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => onPick(skill.skillId)}
       className={`w-full text-left p-3 rounded-md border transition-all ${
         selected
           ? "border-magenta bg-magenta/5"
@@ -656,7 +670,7 @@ function SkillPick({
       </div>
     </button>
   );
-}
+});
 
 function PlaceholderPanel() {
   return (
