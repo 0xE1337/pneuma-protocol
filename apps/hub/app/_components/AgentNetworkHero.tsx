@@ -92,19 +92,15 @@ export function AgentNetworkHero() {
     <section className="pt-20 pb-12 flex flex-col items-center text-center gap-7 animate-fade-in">
       <span className="pill-live">{t("agent_hero.pill")}</span>
 
+      {/* 主 H1 —— 老 hero 的 3 行大 tagline，magenta 重音保留 */}
       <h1 className="display text-5xl md:text-7xl lg:text-[88px] max-w-5xl leading-[1.05]">
-        {t("agent_hero.title")}
+        {t("home.hero.title.line1")}
+        <span className="block text-magenta">{t("home.hero.title.line2")}</span>
+        {t("home.hero.title.line3")}
       </h1>
 
-      {/* 主 subtitle —— 复用老 hero 的 3 段 tagline（保留 magenta 重音） */}
-      <p className="text-ink text-lg md:text-xl max-w-3xl leading-snug font-medium">
-        {t("home.hero.title.line1")}{" "}
-        <span className="text-magenta">{t("home.hero.title.line2")}</span>
-        {t("home.hero.title.line3")}
-      </p>
-
-      {/* 次 subtitle —— 协议层叙事，承接 hero 主标题 "Agent 网络" */}
-      <p className="text-ink-dim text-sm md:text-base max-w-2xl leading-relaxed -mt-2">
+      {/* 副标题 —— 协议层叙事 */}
+      <p className="text-ink-dim text-base md:text-lg max-w-2xl leading-relaxed">
         {t("agent_hero.subtitle")}
       </p>
 
