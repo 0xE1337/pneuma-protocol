@@ -54,14 +54,14 @@ export const messages = {
     "agent_hero.compat":
       "兼容 Agent Network 协议（agentnetwork.org.cn）—— Pneuma 给 anet mesh 加一层链上 USDC 支付 + 跨平台可携带声誉。",
     "agent_hero.compat_chip": "兼容 Agent Network · agentnetwork.org.cn",
-    "agent_hero.daemon.loading": "anet daemon · 检测中…",
-    "agent_hero.daemon.connected": "anet daemon · 已联动",
-    "agent_hero.daemon.not_running": "anet daemon · 未启动",
+    "agent_hero.daemon.loading": "anet 桥 · 检测中…",
+    "agent_hero.daemon.connected": "anet 桥 · 已联动",
+    "agent_hero.daemon.not_running": "anet 桥（可选）· 一行启动",
     "agent_hero.daemon.not_running_hint":
-      "anet 已安装但 daemon 没在跑。运行 `anet daemon &` 启动。",
-    "agent_hero.daemon.not_installed": "anet daemon · 未安装",
+      "anet 跨 mesh 桥是可选 feature，跑了能让 hub 顶部显示绿色 did:key。启动方法：`anet daemon &`（一行命令）。",
+    "agent_hero.daemon.not_installed": "anet 桥（可选）",
     "agent_hero.daemon.not_installed_hint":
-      "本机未装 anet。运行 `npm install -g @agentnetwork/anet` 后再启 daemon。",
+      "anet 桥是协议级跨 mesh 兼容证明，可选。安装：`curl -fsSL https://agentnetwork.org.cn/install.sh | sh`。不装也不影响主项目演示。",
     "agent_hero.openclaw_chip": "OpenClaw 🦞 sponsor track · 一行装：openclaw skills install pneuma",
     "agent_hero.court_chip": "PneumaCourt P2P sponsor track ↗",
     "agent_hero.sponsor_label": "同时申报 sponsor tracks:",
@@ -364,14 +364,14 @@ export const messages = {
     "agent_hero.compat":
       "Compatible with the Agent Network protocol (agentnetwork.org.cn) — Pneuma adds on-chain USDC payment + cross-platform portable reputation on top of the anet mesh.",
     "agent_hero.compat_chip": "Compatible with Agent Network · agentnetwork.org.cn",
-    "agent_hero.daemon.loading": "anet daemon · checking…",
-    "agent_hero.daemon.connected": "anet daemon · linked",
-    "agent_hero.daemon.not_running": "anet daemon · not running",
+    "agent_hero.daemon.loading": "anet bridge · checking…",
+    "agent_hero.daemon.connected": "anet bridge · linked",
+    "agent_hero.daemon.not_running": "anet bridge (optional) · one cmd to start",
     "agent_hero.daemon.not_running_hint":
-      "anet is installed but the daemon is not running. Start it with `anet daemon &`.",
-    "agent_hero.daemon.not_installed": "anet daemon · not installed",
+      "anet bridge is optional cross-mesh proof. Start it (`anet daemon &`) to flip the chip green; main demo doesn't depend on it.",
+    "agent_hero.daemon.not_installed": "anet bridge (optional)",
     "agent_hero.daemon.not_installed_hint":
-      "anet not installed on this machine. Run `npm install -g @agentnetwork/anet`, then start the daemon.",
+      "anet bridge demonstrates cross-mesh compatibility. Install: `curl -fsSL https://agentnetwork.org.cn/install.sh | sh`. Skipping it does not affect the main demo.",
     "agent_hero.openclaw_chip": "OpenClaw 🦞 sponsor track · openclaw skills install pneuma",
     "agent_hero.court_chip": "PneumaCourt P2P sponsor track ↗",
     "agent_hero.sponsor_label": "Also submitting to sponsor tracks:",

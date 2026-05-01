@@ -273,16 +273,17 @@ function AnetDaemonBadge({
           title: anetDid ?? t("agent_hero.daemon.connected"),
         };
       case "not_running":
+        // 可选拓展 feature —— 用 cyan（信息提示）而非 amber（看着像 warning）
         return {
-          dot: "bg-amber-400",
-          border: "border-amber-400/40 bg-amber-400/5",
+          dot: "bg-cyan/70",
+          border: "border-cyan/30 bg-cyan/5",
           label: t("agent_hero.daemon.not_running"),
           title: t("agent_hero.daemon.not_running_hint"),
         };
       case "not_installed":
         return {
           dot: "bg-ink-faint",
-          border: "border-border bg-bg/50",
+          border: "border-border bg-bg/40",
           label: t("agent_hero.daemon.not_installed"),
           title: t("agent_hero.daemon.not_installed_hint"),
         };
