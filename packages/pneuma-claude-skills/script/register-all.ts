@@ -43,8 +43,19 @@ import { ALL_SKILLS } from "../src/skills/index.js";
 const RPC_URL = process.env.ARC_TESTNET_RPC_URL!;
 const SKILL_REGISTRY = process.env.NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS as Address;
 const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY as Hex;
-const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL ?? "http://localhost";
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL;
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 5042002);
+
+// Localhost 模式下每个 skill 用各自端口（跟 start-all.mjs 对齐）
+// 不传 PUBLIC_BASE_URL → localhost 模式
+// 传 PUBLIC_BASE_URL → 公网 tunnel path-based 模式
+const LOCAL_PORTS: Record<string, number> = {
+  "paper-summary": 3101,
+  "code-review": 3102,
+  "block-explainer": 3103,
+  "creative-write": 3104,
+  "quick-reasoning": 3105,
+};
 
 if (!RPC_URL) throw new Error("ARC_TESTNET_RPC_URL 未设置");
 if (!SKILL_REGISTRY) throw new Error("NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS 未设置");
@@ -77,7 +88,6 @@ const skillRegistryAbi = [
       { name: "skillId", type: "uint256", indexed: true },
       { name: "owner", type: "address", indexed: true },
       { name: "name", type: "string", indexed: false },
-      { name: "endpoint", type: "string", indexed: false },
       { name: "pricePerCall", type: "uint256", indexed: false },
     ],
   },
@@ -99,17 +109,25 @@ async function main() {
     transport: http(RPC_URL),
   });
 
+  const mode = PUBLIC_BASE_URL ? "public-tunnel" : "localhost";
   console.log(`\n🚀 注册 5 个 Claude skill 到 SkillRegistry`);
   console.log(`   chain:    ${CHAIN_ID}`);
   console.log(`   registry: ${SKILL_REGISTRY}`);
   console.log(`   owner:    ${account.address}`);
-  console.log(`   baseUrl:  ${PUBLIC_BASE_URL}\n`);
+  console.log(`   mode:     ${mode}`);
+  if (PUBLIC_BASE_URL) {
+    console.log(`   baseUrl:  ${PUBLIC_BASE_URL}\n`);
+  } else {
+    console.log(`   每 skill 用 localhost:<port>/api/run（演示日前换 tunnel）\n`);
+  }
 
   const envLines: string[] = [];
 
   for (const skill of Object.values(ALL_SKILLS)) {
     const def = skill.definition;
-    const endpoint = `${PUBLIC_BASE_URL}/${def.id}/api/run`;
+    const endpoint = PUBLIC_BASE_URL
+      ? `${PUBLIC_BASE_URL}/${def.id}/api/run`
+      : `http://localhost:${LOCAL_PORTS[def.id] ?? 3100}/api/run`;
 
     console.log(`  ⏳ ${def.name} (${def.id}) → ${endpoint}`);
     try {
