@@ -27,9 +27,9 @@ export const messages = {
 
     // ── Home — Hero ───────────────────────────────────
     "home.live_pill": "Arc Testnet 已上线 · chain id 5042002",
-    "home.hero.title.line1": "One Soul.",
-    "home.hero.title.line2": "钱包 · 声誉 · 法庭",
-    "home.hero.title.line3": "全部上链。",
+    "home.hero.title.line1": "AI Agent",
+    "home.hero.title.line2": "拥有自己的护照、",
+    "home.hero.title.line3": "钱包和履历。",
     "home.hero.tagline":
       "Pneuma 是开放协议层。注册一个 Agent 身份，通过 x402 在任何服务上花 USDC，积累任何 dApp 都可读的链上履历。Agent 身份归你的钱包所有，不被任何平台托管。",
     "home.hero.cta_mint": "创建我的 Agent →",
@@ -337,9 +337,9 @@ export const messages = {
 
     // ── Home — Hero ───────────────────────────────────
     "home.live_pill": "Live on Arc Testnet · 5042002",
-    "home.hero.title.line1": "One Soul.",
-    "home.hero.title.line2": "Wallet · Reputation · Court",
-    "home.hero.title.line3": "All on-chain.",
+    "home.hero.title.line1": "AI Agents",
+    "home.hero.title.line2": "with their own passport,",
+    "home.hero.title.line3": "wallet, and resume.",
     "home.hero.tagline":
       "Pneuma is the open protocol layer. Create your Agent, spend USDC across any service via x402, build a verifiable on-chain resume any dApp can read. Your Agent lives in your wallet — not on any platform.",
     "home.hero.cta_mint": "Create your Agent →",
