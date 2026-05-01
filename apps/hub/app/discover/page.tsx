@@ -354,13 +354,13 @@ function Leaderboard({
   return (
     <div className="surface p-5 space-y-4">
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
-        <div className="space-y-0.5">
-          <h2 className="display text-xl">{title}</h2>
-          <p className="text-[11px] font-mono text-ink-faint">{subtitle}</p>
+        <div className="space-y-1">
+          <h2 className="display text-2xl">{title}</h2>
+          <p className="text-[12px] font-mono text-ink-faint">{subtitle}</p>
         </div>
         <Link
           href={href}
-          className="text-[11px] font-mono text-cyan hover:text-magenta whitespace-nowrap"
+          className="text-[12px] font-mono text-cyan hover:text-magenta whitespace-nowrap"
         >
           {hrefLabel}
         </Link>
@@ -419,13 +419,13 @@ function AgentRow({
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center gap-3 px-3 py-2 text-left"
+        className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
         aria-expanded={expanded}
       >
-        <span className="font-mono text-[11px] text-ink-faint w-6 shrink-0">
+        <span className="font-mono text-[12px] text-ink-faint w-7 shrink-0">
           #{rank}
         </span>
-        <span className="font-mono text-sm text-ink truncate flex-1 min-w-0">
+        <span className="font-mono text-base text-ink truncate flex-1 min-w-0">
           {owner.slice(0, 10)}…{owner.slice(-6)}
         </span>
         <ReputationBadge
@@ -433,11 +433,11 @@ function AgentRow({
           boundaryTriggers12mo={boundaryTriggers12mo}
           size="sm"
         />
-        <span className="text-[10px] font-mono text-ink-faint shrink-0">
+        <span className="text-[12px] font-mono text-ink-dim shrink-0">
           {skillCount} skill · {totalCalls.toString()} calls
         </span>
         <span
-          className={`text-[10px] font-mono text-ink-faint shrink-0 transition-transform ${
+          className={`text-[12px] font-mono text-ink-faint shrink-0 transition-transform ${
             expanded ? "rotate-180" : ""
           }`}
         >
@@ -447,8 +447,8 @@ function AgentRow({
 
       {/* 展开态：详细信息 + 「查看详情」按钮才跳转 */}
       {expanded && (
-        <div className="border-t border-border/60 px-4 py-3 space-y-2.5 animate-fade-in">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+        <div className="border-t border-border/60 px-4 py-4 space-y-3 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono">
             <Detail
               label="完整地址"
               value={
@@ -479,14 +479,14 @@ function AgentRow({
               value={`${skillCount} active skill / ${totalCalls.toString()} 累计调用`}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
+          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border/40">
             <Link
               href={`/agents/${owner}`}
-              className="btn-primary text-[12px] px-3 py-1.5"
+              className="btn-primary text-sm px-4 py-2"
             >
               查看完整履历 →
             </Link>
-            <span className="text-[10px] text-ink-faint font-mono">
+            <span className="text-[11px] text-ink-faint font-mono">
               · 5 tab：概览 / 技能 / 评价 / 担保 / 法庭
             </span>
           </div>
@@ -509,23 +509,23 @@ function SkillRow({ rank, skill }: { rank: number; skill: SkillLike }) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center gap-3 px-3 py-2 text-left"
+        className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
         aria-expanded={expanded}
       >
-        <span className="font-mono text-[11px] text-ink-faint w-6 shrink-0">
+        <span className="font-mono text-[12px] text-ink-faint w-7 shrink-0">
           #{rank}
         </span>
-        <span className="text-sm text-ink truncate flex-1 min-w-0">
+        <span className="text-base text-ink truncate flex-1 min-w-0">
           {skill.name}
         </span>
-        <span className="text-[11px] font-mono text-soul-soft shrink-0">
+        <span className="text-[13px] font-mono text-soul-soft shrink-0">
           {formatUnits(skill.pricePerCall, USDC_DECIMALS)} USDC
         </span>
-        <span className="text-[10px] font-mono text-ink-faint shrink-0">
+        <span className="text-[12px] font-mono text-ink-dim shrink-0">
           {skill.totalCalls.toString()} calls
         </span>
         <span
-          className={`text-[10px] font-mono text-ink-faint shrink-0 transition-transform ${
+          className={`text-[12px] font-mono text-ink-faint shrink-0 transition-transform ${
             expanded ? "rotate-180" : ""
           }`}
         >
@@ -535,8 +535,8 @@ function SkillRow({ rank, skill }: { rank: number; skill: SkillLike }) {
 
       {/* 展开态：skill 详情 + 「调用此 skill」「看 owner」两个 action */}
       {expanded && (
-        <div className="border-t border-border/60 px-4 py-3 space-y-2.5 animate-fade-in">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+        <div className="border-t border-border/60 px-4 py-4 space-y-3 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono">
             <Detail
               label="skill ID"
               value={`#${skill.skillId.toString()} · ${skill.category}`}
@@ -569,16 +569,16 @@ function SkillRow({ rank, skill }: { rank: number; skill: SkillLike }) {
               }
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
+          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border/40">
             <Link
               href={`/run?skillId=${skill.skillId.toString()}`}
-              className="btn-primary text-[12px] px-3 py-1.5"
+              className="btn-primary text-sm px-4 py-2"
             >
               调用此 skill →
             </Link>
             <Link
               href={`/agents/${skill.owner}`}
-              className="text-[12px] font-mono text-cyan hover:text-magenta underline underline-offset-2"
+              className="text-[13px] font-mono text-cyan hover:text-magenta underline underline-offset-2"
             >
               看 owner 主页 →
             </Link>
@@ -597,11 +597,11 @@ function Detail({
   value: React.ReactNode;
 }) {
   return (
-    <div className="space-y-0.5 min-w-0">
-      <div className="text-[9px] uppercase tracking-[0.13em] text-ink-faint">
+    <div className="space-y-1 min-w-0">
+      <div className="text-[10px] uppercase tracking-[0.13em] text-ink-faint font-mono">
         {label}
       </div>
-      <div className="text-ink truncate">{value}</div>
+      <div className="text-[13px] text-ink truncate">{value}</div>
     </div>
   );
 }
