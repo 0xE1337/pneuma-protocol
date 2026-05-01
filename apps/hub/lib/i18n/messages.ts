@@ -59,6 +59,7 @@ export const messages = {
     "agent_hero.daemon.not_installed": "anet daemon · 未安装",
     "agent_hero.daemon.not_installed_hint":
       "本机未装 anet。运行 `npm install -g @agentnetwork/anet` 后再启 daemon。",
+    "agent_hero.openclaw_chip": "OpenClaw 🦞 一行装：openclaw skills install pneuma",
 
     // ── Home — Product mockup ─────────────────────────
     "home.mockup.user_request_label": "用户请求",
@@ -338,6 +339,7 @@ export const messages = {
     "agent_hero.daemon.not_installed": "anet daemon · not installed",
     "agent_hero.daemon.not_installed_hint":
       "anet not installed on this machine. Run `npm install -g @agentnetwork/anet`, then start the daemon.",
+    "agent_hero.openclaw_chip": "Install on OpenClaw 🦞: openclaw skills install pneuma",
 
     // ── Home — Product mockup ─────────────────────────
     "home.mockup.user_request_label": "User Request",

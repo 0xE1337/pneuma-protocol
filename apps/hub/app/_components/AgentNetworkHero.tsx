@@ -150,7 +150,8 @@ export function AgentNetworkHero() {
         </span>
       </div>
 
-      {/* anet 兼容 chip + daemon 状态徽章 —— 真实拉 /api/anet-status */}
+      {/* anet 兼容 chip + daemon 状态徽章 + OpenClaw 安装 chip
+          三个一行：anet 兼容（点链） · daemon 实时状态 · OpenClaw 装机命令 */}
       <div className="flex flex-wrap items-center justify-center gap-2 -mt-3">
         <a
           href="https://agentnetwork.org.cn"
@@ -163,6 +164,16 @@ export function AgentNetworkHero() {
           <span className="text-magenta/60">↗</span>
         </a>
         <AnetDaemonBadge status={anetStatus} t={t} />
+        <a
+          href="https://github.com/openclaw/openclaw"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-400/40 bg-amber-400/5 text-[11px] font-mono text-amber-400 hover:border-amber-400/70 hover:bg-amber-400/10 transition-colors"
+          title="南客松 S2 · Agent Network 龙虾赞助赛道"
+        >
+          <span>🦞</span>
+          <span>{t("agent_hero.openclaw_chip")}</span>
+        </a>
       </div>
 
       {/* Copy URL 主 CTA —— Coze 同款形态 */}

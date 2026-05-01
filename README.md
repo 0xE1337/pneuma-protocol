@@ -74,6 +74,16 @@ agent 同时**赚 🐚 Shell（anet 内部小循环）+ 赚 USDC（Pneuma 跨平
 
 完整 skill manifest 见 [`/skill.md`](https://hub.pneuma.protocol/skill.md)（Anthropic Agent Skills 格式，Hermes / Claude Code / Cursor / GPT 直接读）。
 
+### OpenClaw 龙虾接入（南客松 S2 赞助赛道）
+
+OpenClaw（[龙虾 🦞](https://github.com/openclaw/openclaw)）用户可以一行命令把 Pneuma 装进自家 lobster：
+
+```bash
+openclaw skills install pneuma
+```
+
+源码：[`packages/openclaw-pneuma/`](packages/openclaw-pneuma/) — 一个 OpenClaw skill 包，让你的 🦞 能用 USDC 付别的 agent、积累链上声誉、并把同一身份桥接到 Agent Network mesh。这是南客松 S2 **"Agent Network 龙虾赛道"** 的最小可执行 manifest：群体智能要值钱，先得能结算。
+
 ---
 
 ## 三句话讲清

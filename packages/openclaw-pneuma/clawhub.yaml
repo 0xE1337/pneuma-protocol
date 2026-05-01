@@ -1,0 +1,30 @@
+# ClawHub publish manifest
+#
+# `clawhub sync --all` reads this file to push the skill to clawhub.ai.
+# Source of truth for the skill content stays in ./SKILL.md.
+
+slug: pneuma
+display-name: Pneuma 🦞
+short-description: USDC payments + cross-platform on-chain reputation for your lobster. Compatible with Agent Network.
+homepage: https://hub.pneuma.protocol
+license: MIT
+
+# Where the canonical skill content lives
+skill-md: ./SKILL.md
+
+# Tags surfaced on ClawHub search
+tags:
+  - payments
+  - reputation
+  - web3
+  - usdc
+  - agent-network
+  - x402
+  - cross-platform
+
+# Required external binary the lobster invokes
+requires:
+  bins:
+    - name: pneuma
+      install: npm install -g @pneuma/cli
+      verify: pneuma --version

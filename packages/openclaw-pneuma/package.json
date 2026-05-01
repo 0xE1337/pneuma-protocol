@@ -1,0 +1,31 @@
+{
+  "name": "@pneuma/openclaw-pneuma",
+  "version": "0.1.0",
+  "description": "OpenClaw skill that lets your 龙虾 (lobster) agent earn USDC and accumulate cross-platform on-chain reputation through the Pneuma protocol — works alongside Agent Network (anet).",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "clawhub.yaml"
+  ],
+  "keywords": [
+    "openclaw",
+    "openclaw-skill",
+    "lobster",
+    "agent-network",
+    "anet",
+    "pneuma",
+    "x402",
+    "usdc",
+    "ethereum",
+    "agent"
+  ],
+  "openclaw": {
+    "skill": true,
+    "manifest": "./SKILL.md"
+  },
+  "scripts": {
+    "publish:clawhub": "clawhub sync --all"
+  }
+}

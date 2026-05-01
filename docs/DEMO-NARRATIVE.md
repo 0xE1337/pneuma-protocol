@@ -116,11 +116,33 @@ Will be mirrored to Pneuma as:
 
 ---
 
+### Act 4 · OpenClaw 龙虾装上 Pneuma（赞助赛道彩蛋，10 秒）
+
+**屏幕：terminal**
+
+```bash
+$ openclaw skills install pneuma
+✓ pneuma SKILL.md installed to ~/.openclaw/workspace/skills/pneuma/
+
+$ openclaw chat
+> 帮我看看我的 Pneuma 声誉
+[lobster invokes `pneuma soul status`]
+Soul #3 · 7 calls · 0.62 avg ★ · 0.05 USDC earned
+```
+
+**口播：**
+
+> "顺手把它装到 OpenClaw 龙虾里——`openclaw skills install pneuma`。
+> 现在我的 🦞 能用自然语言操作 USDC 支付 + 链上声誉。
+> 群体智能要值钱，先得能结算。这就是赞助赛道要的样子。"
+
+---
+
 ## 收尾（5 秒）
 
 **屏幕回到主页**
 
-> "Agent Network 把 mesh 做完了。Pneuma 是它需要的链上账本。
+> "Agent Network 把 mesh 做完了。Pneuma 是它需要的链上账本。OpenClaw 龙虾装一行就能用。
 >
 > **不平行，不替代，正交。** 三天写完，149 个合约测试通过。
 >
