@@ -1,15 +1,39 @@
 # Pneuma
 
-> **One Soul. Every paid tool, every platform.**
+> **AI Agent 需要的不是一个 App，是协议。钱包、声誉、法庭，全部上链。**
 >
-> USDC 结算 + 链上可携带声誉，给 AI Agent 网络。**兼容 [Agent Network](https://agentnetwork.org.cn) mesh** —— 给 anet 的封闭 🐚 Shell 经济加一层开放、可验证、跨链的支付收据。
+> ERC-721 + ERC-6551 + ERC-8004 + x402 + PneumaCourt —— 一整套给 sovereign AI Agent 的协议层基础设施。代码开源、公式开源、数据上链、跨平台可携带。
 
+[![Track 3](https://img.shields.io/badge/南客松%20S2-Track%203%20Out%20of%20Scope-ff69b4)](docs/TRACK_3_PITCH.md)
 [![Live on Arc Testnet](https://img.shields.io/badge/live-Arc%20Testnet-purple)](https://testnet.arcscan.app)
 [![8 contracts deployed](https://img.shields.io/badge/contracts-8%20deployed-green)](#contracts)
 [![149 tests passing](https://img.shields.io/badge/tests-149%2F149%20passing-green)](#tests)
 [![ERC-8004](https://img.shields.io/badge/ERC--8004-IdentityRegistry-blue)](#contracts)
 [![USDC native](https://img.shields.io/badge/payment-USDC%20native-26a17b)](#)
 [![anet compatible](https://img.shields.io/badge/anet-compatible-ff69b4)](#agent-network-兼容性)
+
+---
+
+## 🎯 南客松 S2 赛道选择：Track 3「Life Short and Play More」（Out of Scope）
+
+我们没有把 Pneuma 塞进 Track 1 (行业生产力) 或 Track 2 (日常生活)——因为它本来就**不是**一个垂直行业 App，也不是日常打开的 App。它是**协议层基础设施**，给 AI Agent 提供：
+
+- **钱包** — ERC-721 Soul + ERC-6551 TBA + ERC-8004 IdentityRegistry 三标准复合身份
+- **结算** — x402 + 真 USDC（不是平台积分）+ EIP-712 PaymentAuth 双闸门
+- **声誉** — 4 维 conviction-weighted 公式（`@pneuma/reputation-formula` npm 包，任意 dApp 可复算同一分数）
+- **法庭** — 多陪审员 P2P 仲裁（`PneumaCourt.sol`，21/21 forge tests）
+- **反女巫** — 段位 hard cap + boundary 阶梯 + 担保图传染 + 可选 Sybil Resistance Proof（[ANTI_SYBIL_DESIGN.md](docs/ANTI_SYBIL_DESIGN.md)）
+
+**详细评委向 pitch**: [`docs/TRACK_3_PITCH.md`](docs/TRACK_3_PITCH.md) — 6 个协议级抓手 + 每个对应的 demo 入口。
+
+### 同时申报的 sponsor track（独立提交项目）
+
+| Sponsor Track | 项目 | 路径 |
+|---|---|---|
+| 🦞 **OpenClaw** Agent Skills | SKILL.md package — OpenClaw 龙虾一行装：`openclaw skills install pneuma` | [`packages/openclaw-pneuma`](packages/openclaw-pneuma) |
+| ⚖ **P2P Service Gateway** | 多陪审员 P2P 仲裁服务，Python FastAPI + anet mesh discover + web3 finalize | [`pneuma-court-p2p`](https://github.com/0xE/pneuma-court-p2p)（独立 Python 仓库）|
+
+主项目 (`pneuma-protocol`) 提供合约 + hub UI + 公式包 + 全部协议层创新；两个 sponsor track 是协议拓展面的实证：**协议不绑平台**。
 
 ---
 

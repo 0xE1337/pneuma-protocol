@@ -150,8 +150,7 @@ export function AgentNetworkHero() {
         </span>
       </div>
 
-      {/* anet 兼容 chip + daemon 状态徽章 + OpenClaw 安装 chip
-          三个一行：anet 兼容（点链） · daemon 实时状态 · OpenClaw 装机命令 */}
+      {/* 协议兼容性 chip 行 —— anet 兼容 + daemon 实时状态 */}
       <div className="flex flex-wrap items-center justify-center gap-2 -mt-3">
         <a
           href="https://agentnetwork.org.cn"
@@ -164,15 +163,33 @@ export function AgentNetworkHero() {
           <span className="text-magenta/60">↗</span>
         </a>
         <AnetDaemonBadge status={anetStatus} t={t} />
+      </div>
+
+      {/* Sponsor tracks chip 行 —— OpenClaw 🦞 + PneumaCourt P2P
+          这俩都是赛道 3 主项目同时申报的 sponsor track；court-p2p 独立 Python 仓库 */}
+      <div className="flex flex-wrap items-center justify-center gap-2 -mt-2">
+        <span className="text-[10px] font-mono text-ink-faint uppercase tracking-wider self-center">
+          {t("agent_hero.sponsor_label")}
+        </span>
         <a
           href="https://github.com/openclaw/openclaw"
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-400/40 bg-amber-400/5 text-[11px] font-mono text-amber-400 hover:border-amber-400/70 hover:bg-amber-400/10 transition-colors"
-          title="南客松 S2 · Agent Network 龙虾赞助赛道"
+          title="南客松 S2 · OpenClaw 🦞 sponsor track"
         >
           <span>🦞</span>
           <span>{t("agent_hero.openclaw_chip")}</span>
+        </a>
+        <a
+          href="https://github.com/0xE/pneuma-court-p2p"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan/40 bg-cyan/5 text-[11px] font-mono text-cyan hover:border-cyan/70 hover:bg-cyan/10 transition-colors"
+          title="南客松 S2 · P2P Service Gateway sponsor track · 多陪审员 anet mesh 仲裁"
+        >
+          <span>⚖</span>
+          <span>{t("agent_hero.court_chip")}</span>
         </a>
       </div>
 

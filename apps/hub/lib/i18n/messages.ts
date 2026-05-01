@@ -27,19 +27,19 @@ export const messages = {
 
     // ── Home — Hero ───────────────────────────────────
     "home.live_pill": "Arc Testnet 已上线 · chain id 5042002",
-    "home.hero.title.line1": "AI Agent",
-    "home.hero.title.line2": "拥有自己的护照、",
-    "home.hero.title.line3": "钱包和履历。",
+    "home.hero.title.line1": "AI Agent 需要的不是",
+    "home.hero.title.line2": "一个 App，是协议。",
+    "home.hero.title.line3": "钱包、声誉、法庭，全部上链。",
     "home.hero.tagline":
       "Pneuma 是开放协议层。注册一个 Agent 身份，通过 x402 在任何服务上花 USDC，积累任何 dApp 都可读的链上履历。Agent 身份归你的钱包所有，不被任何平台托管。",
     "home.hero.cta_mint": "创建我的 Agent →",
     "home.hero.cta_run": "试试调度器",
 
     // ── Home — Agent Network Hero（Coze 同款"复制 URL 让 Agent 自己加入"）
-    "agent_hero.pill": "● Open Agent Network · Arc Testnet 已上线",
+    "agent_hero.pill": "● 南客松 S2 · Track 3 (Out of Scope) · 协议层 first-principles 实验",
     "agent_hero.title": "Agent 网络",
     "agent_hero.subtitle":
-      "AI Agent 在这里铸造身份、调用彼此、积累链上履历。",
+      "ERC-721 + ERC-6551 + ERC-8004 + x402 + PneumaCourt —— 一整套给 sovereign AI Agent 的协议层基础设施。代码开源、公式开源、数据上链、跨平台可携带。",
     "agent_hero.stat_souls": "Souls 已加入",
     "agent_hero.stat_skills": "active skills",
     "agent_hero.stat_calls": "calls 已结算",
@@ -62,7 +62,9 @@ export const messages = {
     "agent_hero.daemon.not_installed": "anet daemon · 未安装",
     "agent_hero.daemon.not_installed_hint":
       "本机未装 anet。运行 `npm install -g @agentnetwork/anet` 后再启 daemon。",
-    "agent_hero.openclaw_chip": "OpenClaw 🦞 一行装：openclaw skills install pneuma",
+    "agent_hero.openclaw_chip": "OpenClaw 🦞 sponsor track · 一行装：openclaw skills install pneuma",
+    "agent_hero.court_chip": "PneumaCourt P2P sponsor track ↗",
+    "agent_hero.sponsor_label": "同时申报 sponsor tracks:",
 
     // ── Home — Product mockup ─────────────────────────
     "home.mockup.user_request_label": "用户请求",
@@ -335,19 +337,19 @@ export const messages = {
 
     // ── Home — Hero ───────────────────────────────────
     "home.live_pill": "Live on Arc Testnet · 5042002",
-    "home.hero.title.line1": "AI Agents",
-    "home.hero.title.line2": "with their own passport,",
-    "home.hero.title.line3": "wallet, and resume.",
+    "home.hero.title.line1": "Agents don't need",
+    "home.hero.title.line2": "another app.",
+    "home.hero.title.line3": "They need a protocol layer.",
     "home.hero.tagline":
       "Pneuma is the open protocol layer. Create your Agent, spend USDC across any service via x402, build a verifiable on-chain resume any dApp can read. Your Agent lives in your wallet — not on any platform.",
     "home.hero.cta_mint": "Create your Agent →",
     "home.hero.cta_run": "Try the Orchestrator",
 
     // ── Home — Agent Network Hero (Coze-style "copy URL → agent self-onboards")
-    "agent_hero.pill": "● Open Agent Network · Live on Arc Testnet",
+    "agent_hero.pill": "● 南客松 S2 · Track 3 (Out of Scope) · Protocol-Layer Lab",
     "agent_hero.title": "Agent Network.",
     "agent_hero.subtitle":
-      "Where AI agents mint identity, call each other, and accumulate verifiable on-chain history.",
+      "ERC-721 + ERC-6551 + ERC-8004 + x402 + PneumaCourt — a full-stack protocol layer for sovereign AI Agents. Open-source code, open-source formulas, on-chain data, cross-platform portable.",
     "agent_hero.stat_souls": "Souls joined",
     "agent_hero.stat_skills": "active skills",
     "agent_hero.stat_calls": "calls settled",
@@ -370,7 +372,9 @@ export const messages = {
     "agent_hero.daemon.not_installed": "anet daemon · not installed",
     "agent_hero.daemon.not_installed_hint":
       "anet not installed on this machine. Run `npm install -g @agentnetwork/anet`, then start the daemon.",
-    "agent_hero.openclaw_chip": "Install on OpenClaw 🦞: openclaw skills install pneuma",
+    "agent_hero.openclaw_chip": "OpenClaw 🦞 sponsor track · openclaw skills install pneuma",
+    "agent_hero.court_chip": "PneumaCourt P2P sponsor track ↗",
+    "agent_hero.sponsor_label": "Also submitting to sponsor tracks:",
 
     // ── Home — Product mockup ─────────────────────────
     "home.mockup.user_request_label": "User Request",
