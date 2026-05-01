@@ -18,6 +18,7 @@ import {
   formatScore,
   type AttestationLike,
 } from "@/lib/reputationScore";
+import { ReputationBadge } from "@/app/_components/ReputationBadge";
 import { useI18n } from "@/lib/i18n";
 
 const CATEGORY_ACCENT: Record<string, string> = {
@@ -212,7 +213,7 @@ export default function SkillsPage() {
                   <UpstreamDisclosure model={s.upstreamModel} markupBps={Number(s.markupBps)} />
                 )}
 
-                <ReputationBadge owner={s.owner as Address} />
+                <SkillReputationPanel owner={s.owner as Address} />
 
                 {/* 担保图徽章 —— 老 agent 给该 skill owner 锁了多少 USDC 背书 */}
                 <BackedByBadge endorsee={s.owner as Address} />
@@ -343,14 +344,18 @@ function UpstreamDisclosure({ model, markupBps }: { model: string; markupBps: nu
 }
 
 /**
- * ReputationBadge — 把 attestation 列表跑过 reputationScore 公式，渲染加权声誉
+ * SkillReputationPanel — 把 attestation 列表跑过 reputationScore 公式，
+ * 渲染段位徽章（顶部）+ 完整 Conviction-weighted breakdown（caller/provider 双视角）
  *
  * 与中心化评分系统的差异：
  *   - 公式公开（apps/hub/lib/reputationScore.ts）
  *   - 数据公开（PneumaAttestation 链上读取）
  *   - 任意第三方 dApp 可复现同一分数 → 开放协议第一性原则
+ *
+ * 命名说明：曾叫 ReputationBadge，与全局 _components/ReputationBadge 同名冲突，
+ * 改成 SkillReputationPanel 更准确（这是 panel 不是 badge）。
  */
-function ReputationBadge({ owner }: { owner: Address }) {
+function SkillReputationPanel({ owner }: { owner: Address }) {
   const { data: attestations } = useReadContract({
     address: PNEUMA_ATTESTATION,
     abi: PneumaAttestationAbi,
@@ -366,15 +371,15 @@ function ReputationBadge({ owner }: { owner: Address }) {
   const hasProviderRated = breakdown.avgRatingByProvider > 0;
 
   return (
-    <div className="space-y-2 pt-2 border-t border-border/60">
-      <div className="flex items-baseline justify-between">
+    <div className="space-y-3 pt-2 border-t border-border/60">
+      <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <span className="text-[10px] uppercase tracking-[0.13em] text-magenta font-mono">
           Conviction-weighted reputation
         </span>
-        <span className="font-mono text-lg text-cyan">
-          {formatScore(breakdown.score)}
-          <span className="text-[10px] text-ink-faint ml-1">/ 100</span>
-        </span>
+        <ReputationBadge rawTotal={breakdown.score} size="md" />
+      </div>
+      <div className="text-[10px] text-ink-faint font-mono">
+        raw {formatScore(breakdown.score)} / 100 · 段位刻度 0-1000
       </div>
       <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
         <RatingChip

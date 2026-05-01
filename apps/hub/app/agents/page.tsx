@@ -13,9 +13,10 @@ import {
 } from "@/lib/contracts";
 import {
   computeReputation,
-  formatScore,
   type AttestationLike,
 } from "@/lib/reputationScore";
+import { ReputationBadge } from "@/app/_components/ReputationBadge";
+import { ReputationFormulaPanel } from "@/app/_components/ReputationFormulaPanel";
 import {
   agentDetailHref,
   groupSkillsByOwner,
@@ -112,6 +113,9 @@ export default function AgentsPage() {
             color="text-soul-soft"
           />
         </div>
+
+        {/* 公式公开折叠面板 —— 协议层卖点：声誉不是平台打分，是公式 + 数据全开源 */}
+        <ReputationFormulaPanel />
 
         {isLoading && (
           <div className="text-ink-faint font-mono">
@@ -374,10 +378,10 @@ function AgentReputationInline({ owner }: { owner: Address }) {
   }
 
   return (
-    <span className="flex items-center gap-2">
-      <span className="text-magenta">★</span>
-      <span className="text-cyan">{formatScore(breakdown.score)}</span>
-      <span className="text-ink-faint">/ 100</span>
+    <span className="flex items-center gap-2 flex-wrap">
+      {/* v1 economic-only score 喂 Badge —— 列表卡只算 1 个维度避免每卡 4× RPC；
+          详情页用完整 v2 4-dim Radar */}
+      <ReputationBadge rawTotal={breakdown.score} size="sm" />
       <span className="text-ink-faint">·</span>
       <span className="text-ink-dim">
         {breakdown.validCount}{" "}
