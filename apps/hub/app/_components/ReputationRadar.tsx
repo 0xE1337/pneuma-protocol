@@ -18,6 +18,7 @@
  */
 
 import type { ReputationV2Breakdown } from "@/lib/reputationScore.v2";
+import { scaleToDisplayScore, getTier } from "@pneuma/reputation-formula";
 
 interface RadarProps {
   breakdown: ReputationV2Breakdown;
@@ -28,6 +29,10 @@ export function ReputationRadar({ breakdown, size = 240 }: RadarProps) {
   const cx = size / 2;
   const cy = size / 2;
   const maxR = (size / 2) * 0.78; // 留 22% margin 给 label
+
+  // 0-100 raw → 0-1000 display + 段位
+  const displayScore = scaleToDisplayScore(breakdown.total);
+  const tier = getTier(displayScore);
 
   // 4 个维度按 NESW 方位
   const dims: Array<{
@@ -175,32 +180,37 @@ export function ReputationRadar({ breakdown, size = 240 }: RadarProps) {
           );
         })}
 
-        {/* Center total score */}
-        <circle cx={cx} cy={cy} r={28} fill="rgba(0,0,0,0.4)" />
+        {/* Center total score —— display 0-1000 + tier emoji */}
+        <circle cx={cx} cy={cy} r={32} fill="rgba(0,0,0,0.55)" />
         <text
           x={cx}
-          y={cy - 4}
+          y={cy - 8}
           textAnchor="middle"
           dominantBaseline="middle"
           fontFamily="ui-monospace, SF Mono, monospace"
-          fontSize="18"
+          fontSize="20"
           fontWeight="700"
           fill="white"
         >
-          {breakdown.total.toFixed(0)}
+          {displayScore}
         </text>
         <text
           x={cx}
-          y={cy + 12}
+          y={cy + 11}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontFamily="ui-monospace, SF Mono, monospace"
-          fontSize="9"
-          fill="rgba(200,200,200,0.6)"
+          fontSize="14"
         >
-          / 100
+          {tier.emoji}
         </text>
       </svg>
+
+      {/* 段位 + raw 双行说明，放图下方比挤在 SVG 中心更可读 */}
+      <div className="flex items-baseline gap-2 font-mono text-[11px] text-ink-faint">
+        <span className="font-semibold text-ink-dim">{tier.zhName}（{tier.enName}）</span>
+        <span>·</span>
+        <span>raw {breakdown.total.toFixed(1)} / 100</span>
+      </div>
     </div>
   );
 }
