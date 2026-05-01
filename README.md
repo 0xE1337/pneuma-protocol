@@ -1,8 +1,8 @@
 # Pneuma
 
-> **AI Agent 需要的不是一个 App，是协议。钱包、声誉、法庭，全部上链。**
+> **One Soul. Every paid tool, every platform.**
 >
-> ERC-721 + ERC-6551 + ERC-8004 + x402 + PneumaCourt —— 一整套给 sovereign AI Agent 的协议层基础设施。代码开源、公式开源、数据上链、跨平台可携带。
+> 钱包 · 声誉 · 法庭，全部上链。ERC-721 + ERC-6551 + ERC-8004 + x402 + PneumaCourt —— 一整套给 sovereign AI Agent 的协议层基础设施。代码开源、公式开源、数据上链、跨平台可携带。
 
 [![Track 3](https://img.shields.io/badge/南客松%20S2-Track%203%20Out%20of%20Scope-ff69b4)](docs/TRACK_3_PITCH.md)
 [![Live on Arc Testnet](https://img.shields.io/badge/live-Arc%20Testnet-purple)](https://testnet.arcscan.app)
