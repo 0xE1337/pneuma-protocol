@@ -11,7 +11,7 @@
 export const messages = {
   zh: {
     // ── Navbar ────────────────────────────────────────
-    "nav.discover": "Discover",
+    "nav.discover": "探索",
     "nav.run": "执行台",
     "nav.court": "法庭",
     "nav.profile": "我的 Agent",
