@@ -129,6 +129,9 @@ function RunPageInner() {
     address,
   );
 
+  // 模式切换：手动 vs 自然语言（接 /api/orchestrate planner LLM）
+  const [mode, setMode] = useState<"manual" | "smart">("manual");
+
   // 用户选择
   const [selectedTokenId, setSelectedTokenId] = useState<bigint | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<bigint | null>(null);
@@ -412,11 +415,49 @@ function RunPageInner() {
           </p>
         </header>
 
+        {/* 模式切换 —— Manual = 老的手动选 Soul + Skill；Smart = 自然语言 → planner LLM 拆解 → 并行调用 */}
+        <div className="mb-8 flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.13em] text-ink-faint font-mono">
+            Mode:
+          </span>
+          <button
+            type="button"
+            onClick={() => setMode("manual")}
+            className={`px-3 py-1 rounded-full text-[11px] font-mono transition-colors border ${
+              mode === "manual"
+                ? "border-cyan/60 bg-cyan/10 text-cyan"
+                : "border-border bg-bg/40 text-ink-dim hover:border-soul/40"
+            }`}
+          >
+            Manual · 手选 Soul + Skill
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("smart")}
+            className={`px-3 py-1 rounded-full text-[11px] font-mono transition-colors border ${
+              mode === "smart"
+                ? "border-magenta/60 bg-magenta/10 text-magenta"
+                : "border-border bg-bg/40 text-ink-dim hover:border-soul/40"
+            }`}
+          >
+            ⚡ Smart · 自然语言 → 多 skill 并行
+          </button>
+        </div>
+
         {/* Connection / chain guard */}
         {!isConnected && <ConnectPrompt />}
         <WrongChainBanner />
 
-        {isConnected && !wrongChain && (
+        {/* Smart 模式 —— 接 /api/orchestrate（已有 plan + execute + aggregate）*/}
+        {isConnected && !wrongChain && mode === "smart" && (
+          <SmartRunPanel
+            tokenId={selectedTokenId}
+            souls={souls}
+            onPickSoul={onPickSoul}
+          />
+        )}
+
+        {isConnected && !wrongChain && mode === "manual" && (
           <div className="grid lg:grid-cols-[480px_1fr] gap-6 items-start">
             {/* Left column */}
             <div className="space-y-5">
@@ -1082,3 +1123,240 @@ async function safeText(resp: Response): Promise<string> {
 // publicClient 的类型只在编译期需要，这里用类型断言来抚平 wagmi 返回的 union
 // 不直接 import 是为了避免 ts-eslint 提示 unused
 export type _PublicClient = PublicClient;
+
+// ──────────────────────────────────────────────────────────────────────
+//  Smart mode —— 自然语言 → planner LLM → 多 skill 并行调用
+// ──────────────────────────────────────────────────────────────────────
+
+interface OrchestrateResponse {
+  query: string;
+  callerTBA: string;
+  plan: {
+    reasoning: string;
+    steps: Array<{
+      skillId: number;
+      reason: string;
+      body: Record<string, unknown>;
+    }>;
+  };
+  results: Array<{
+    skillId: number;
+    skillName: string;
+    success: boolean;
+    data: unknown;
+    error: string | null;
+    callId: string | null;
+    paidAmount: string | null;
+    escrowTxHash: string | null;
+    durationMs: number;
+  }>;
+  answer: string;
+}
+
+/**
+ * SmartRunPanel —— 自然语言模式
+ *
+ * 用户输入一句话 → POST /api/orchestrate（已有 server-side bridge）：
+ *   1. discoverSkills 拉链上 SkillRegistry
+ *   2. plan() 让 LLM 拆解为 N 步 skill 调用
+ *   3. Executor.executeParallel 并行 escrow + call + settle
+ *   4. aggregate() 把多个结果聚合成单段最终答案
+ *
+ * 注意：当前 /api/orchestrate 用 server-side DEPLOYER_PRIVATE_KEY 签 escrow
+ * （demo 简化）。真实生产应改成 user wallet 直签——架构没破，只是 UX 路径替换。
+ */
+function SmartRunPanel({
+  tokenId,
+  souls,
+  onPickSoul,
+}: {
+  tokenId: bigint | null;
+  souls: SoulSummary[];
+  onPickSoul: (id: bigint) => void;
+}) {
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resp, setResp] = useState<OrchestrateResponse | null>(null);
+
+  async function run() {
+    if (!tokenId || input.trim().length === 0) return;
+    setBusy(true);
+    setError(null);
+    setResp(null);
+    try {
+      const r = await fetch("/api/orchestrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: input.trim(),
+          tokenId: Number(tokenId),
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        throw new Error(data.error ?? `HTTP ${r.status}`);
+      }
+      setResp(data as OrchestrateResponse);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="grid lg:grid-cols-[480px_1fr] gap-6 items-start">
+      {/* Left: Soul picker + input */}
+      <div className="space-y-5">
+        <div className="surface p-5 space-y-4">
+          <label className="label">Pick your Soul</label>
+          {souls.length === 0 ? (
+            <div className="text-sm text-ink-dim leading-relaxed">
+              No Soul yet on this wallet.{" "}
+              <Link
+                href="/mint"
+                className="text-soul-soft underline underline-offset-2"
+              >
+                Mint one first →
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {souls.map((s) => (
+                <SoulPick
+                  key={s.tokenId.toString()}
+                  soul={s}
+                  selected={tokenId === s.tokenId}
+                  onPick={onPickSoul}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="surface p-5 space-y-4">
+          <label className="label flex items-center justify-between">
+            <span>What do you want to do?</span>
+            <span className="text-[10px] text-magenta font-mono uppercase tracking-wider">
+              ⚡ planner LLM 自动选 skill
+            </span>
+          </label>
+          <textarea
+            className="input min-h-[120px] resize-y font-sans text-sm leading-relaxed"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="例：查 ETH 当前价格，再用一句话总结这段..."
+            disabled={busy}
+          />
+          <button
+            type="button"
+            onClick={run}
+            disabled={busy || !tokenId || input.trim().length === 0}
+            className="btn-primary w-full text-sm"
+          >
+            {busy
+              ? "Planning + executing..."
+              : "▶ 让 planner 拆任务并并行结算"}
+          </button>
+          {error && (
+            <div className="text-xs text-magenta bg-magenta/10 border border-magenta/40 rounded-md p-3 break-words font-mono">
+              {error}
+            </div>
+          )}
+          <p className="text-[10px] text-ink-faint font-mono leading-relaxed">
+            planner 会读链上 skill 列表 + 真用户评论，挑 N 个并行调用 + 聚合答案。
+            每个 skill 独立 escrow / settle / 链上 attestation。
+          </p>
+        </div>
+      </div>
+
+      {/* Right: Plan + results + final answer */}
+      <div className="space-y-4">
+        {!resp && !busy && (
+          <div className="surface-glow p-12 text-center flex flex-col items-center gap-3">
+            <div className="text-magenta text-3xl">⚡</div>
+            <h3 className="display text-xl">Smart mode</h3>
+            <p className="text-ink-dim text-sm max-w-md leading-relaxed">
+              Type a natural-language task on the left. The planner LLM will
+              break it into atomic skill calls and execute them in parallel
+              against on-chain registered services.
+            </p>
+          </div>
+        )}
+
+        {busy && (
+          <div className="surface-glow p-8 text-center font-mono text-sm text-cyan animate-pulse">
+            Planner 正在拆解任务...
+          </div>
+        )}
+
+        {resp && (
+          <>
+            <div className="surface p-5 space-y-3">
+              <div className="text-[10px] uppercase tracking-[0.13em] text-cyan font-mono">
+                Plan · 拆解为 {resp.plan.steps.length} 步
+              </div>
+              <p className="text-sm text-ink-dim italic leading-relaxed">
+                {resp.plan.reasoning}
+              </p>
+              <div className="space-y-2 font-mono text-[11px]">
+                {resp.plan.steps.map((step, i) => (
+                  <div
+                    key={i}
+                    className="bg-bg/40 border border-border rounded p-2"
+                  >
+                    <div className="text-magenta">
+                      {String(i + 1).padStart(2, "0")} → skill #{step.skillId}
+                    </div>
+                    <div className="text-ink-dim mt-1">{step.reason}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="surface p-5 space-y-3">
+              <div className="text-[10px] uppercase tracking-[0.13em] text-cyan font-mono">
+                Parallel x402 execution · {resp.results.filter((r) => r.success).length} / {resp.results.length} ✓
+              </div>
+              <div className="space-y-2">
+                {resp.results.map((r) => (
+                  <div
+                    key={r.skillId}
+                    className="surface px-3 py-2 flex items-center gap-3 text-[12px] font-mono"
+                  >
+                    <span
+                      className={r.success ? "text-cyan" : "text-magenta"}
+                    >
+                      {r.success ? "✓" : "✗"}
+                    </span>
+                    <span className="text-ink flex-1 truncate">
+                      {r.skillName}
+                    </span>
+                    {r.paidAmount && (
+                      <span className="text-soul-soft text-[11px]">
+                        {(Number(r.paidAmount) / 1e6).toFixed(4)} USDC
+                      </span>
+                    )}
+                    <span className="text-ink-faint text-[10px]">
+                      {r.durationMs}ms
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="surface-gradient p-5 space-y-2">
+              <div className="text-[10px] uppercase tracking-[0.13em] text-magenta">
+                Final answer · aggregated
+              </div>
+              <p className="text-ink text-sm leading-relaxed whitespace-pre-wrap">
+                {resp.answer}
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
