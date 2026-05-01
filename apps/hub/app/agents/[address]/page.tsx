@@ -30,6 +30,12 @@ import {
 } from "@/lib/attestationFormatters";
 import { isV5Skill, type SkillLike } from "@/lib/agents";
 import { useI18n } from "@/lib/i18n";
+import { ReputationBadge } from "@/app/_components/ReputationBadge";
+import { countBoundaryTriggers } from "@/lib/boundaryStats";
+import {
+  useGuiltyRecord,
+  GuiltyRecordProbes,
+} from "@/lib/useGuiltyRecord";
 
 type DetailTab = "overview" | "skills" | "comments" | "endorsements" | "court";
 
@@ -105,6 +111,13 @@ export default function AgentDetailPage({
     allAttestations as unknown as RepAttestation[],
   );
 
+  // 反洗白 + 诚信段位数据 —— ProfileHeader 的 ReputationBadge 用
+  const boundaryTriggers12mo = useMemo(
+    () => countBoundaryTriggers(allAttestations),
+    [allAttestations],
+  );
+  const guiltyRecord = useGuiltyRecord(ownerAddress);
+
   // 5-tab IA：tab state 由 ?tab= 同步以便分享深链 + 浏览器后退
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
 
@@ -155,7 +168,14 @@ export default function AgentDetailPage({
           owner={ownerAddress}
           skillCount={ownedSkills.length}
           breakdown={breakdown}
+          boundaryTriggers12mo={boundaryTriggers12mo}
+          hasGuiltyRecord={guiltyRecord.hasGuiltyRecord}
         />
+
+        {/* 隐藏的 dispute prefetcher —— 让 useGuiltyRecord 异步填充 hasGuiltyRecord
+            page mount 时就跑，不依赖用户切到 court tab。返回 null，无 UI */}
+        {/* @ts-expect-error _probes 是 hook 内部 attach 的（见 useGuiltyRecord 文件注释） */}
+        <GuiltyRecordProbes probes={guiltyRecord._probes ?? []} />
 
         {/* Tab 切换 */}
         <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
@@ -303,10 +323,14 @@ function ProfileHeader({
   owner,
   skillCount,
   breakdown,
+  boundaryTriggers12mo,
+  hasGuiltyRecord,
 }: {
   owner: Address;
   skillCount: number;
   breakdown: ReturnType<typeof computeReputation>;
+  boundaryTriggers12mo: number;
+  hasGuiltyRecord: boolean;
 }) {
   const { t } = useI18n();
 
@@ -328,12 +352,15 @@ function ProfileHeader({
           </a>
         </div>
 
-        <div className="text-right shrink-0">
-          <div className="font-mono text-3xl md:text-4xl font-semibold text-cyan">
-            {formatScore(breakdown.score)}
-            <span className="text-base text-ink-faint ml-1">/ 100</span>
-          </div>
-          <div className="stat-label mt-0.5">
+        <div className="shrink-0">
+          {/* 双层徽章：声誉段位 + 诚信段位（boundary triggers + court guilty hard cap）*/}
+          <ReputationBadge
+            rawTotal={breakdown.score}
+            boundaryTriggers12mo={boundaryTriggers12mo}
+            hasGuiltyRecord={hasGuiltyRecord}
+            size="lg"
+          />
+          <div className="stat-label mt-2 text-right">
             {t("agents.detail.reputation_label")}
           </div>
         </div>

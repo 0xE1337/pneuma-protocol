@@ -33,6 +33,7 @@ import {
 import { groupSkillsByOwner, type SkillLike } from "@/lib/agents";
 import { ReputationBadge } from "@/app/_components/ReputationBadge";
 import { ReputationFormulaPanel } from "@/app/_components/ReputationFormulaPanel";
+import { countBoundaryTriggers } from "@/lib/boundaryStats";
 
 const TOP_LIMIT = 10;
 
@@ -403,6 +404,7 @@ function AgentRow({
 
   const items = (attestations ?? []) as readonly AttestationLike[];
   const breakdown = computeReputation(items as AttestationLike[]);
+  const boundaryTriggers12mo = countBoundaryTriggers(items);
 
   return (
     <Link
@@ -415,7 +417,11 @@ function AgentRow({
       <span className="font-mono text-sm text-ink truncate flex-1 min-w-0">
         {owner.slice(0, 10)}…{owner.slice(-6)}
       </span>
-      <ReputationBadge rawTotal={breakdown.score} size="sm" />
+      <ReputationBadge
+        rawTotal={breakdown.score}
+        boundaryTriggers12mo={boundaryTriggers12mo}
+        size="sm"
+      />
       <span className="text-[10px] font-mono text-ink-faint shrink-0">
         {skillCount} skill · {totalCalls.toString()} calls
       </span>

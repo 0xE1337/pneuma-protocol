@@ -17,6 +17,7 @@ import {
 } from "@/lib/reputationScore";
 import { ReputationBadge } from "@/app/_components/ReputationBadge";
 import { ReputationFormulaPanel } from "@/app/_components/ReputationFormulaPanel";
+import { countBoundaryTriggers } from "@/lib/boundaryStats";
 import {
   agentDetailHref,
   groupSkillsByOwner,
@@ -370,8 +371,10 @@ function AgentReputationInline({ owner }: { owner: Address }) {
 
   const items = (attestations ?? []) as readonly AttestationLike[];
   const breakdown = computeReputation(items as AttestationLike[]);
+  // boundary 触发数从同一份 attestations 数据 client-side 过滤，零额外 RPC
+  const boundaryTriggers12mo = countBoundaryTriggers(items);
 
-  if (breakdown.validCount === 0) {
+  if (breakdown.validCount === 0 && boundaryTriggers12mo === 0) {
     return (
       <span className="text-ink-faint">{t("agents.card.no_reputation")}</span>
     );
@@ -380,8 +383,13 @@ function AgentReputationInline({ owner }: { owner: Address }) {
   return (
     <span className="flex items-center gap-2 flex-wrap">
       {/* v1 economic-only score 喂 Badge —— 列表卡只算 1 个维度避免每卡 4× RPC；
-          详情页用完整 v2 4-dim Radar */}
-      <ReputationBadge rawTotal={breakdown.score} size="sm" />
+          诚信段位走 boundary triggers，hasGuiltyRecord 留 false（列表卡不扫 court）。
+          详情页用完整 v3 + court 数据 */}
+      <ReputationBadge
+        rawTotal={breakdown.score}
+        boundaryTriggers12mo={boundaryTriggers12mo}
+        size="sm"
+      />
       <span className="text-ink-faint">·</span>
       <span className="text-ink-dim">
         {breakdown.validCount}{" "}

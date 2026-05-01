@@ -19,6 +19,7 @@ import {
   type AttestationLike,
 } from "@/lib/reputationScore";
 import { ReputationBadge } from "@/app/_components/ReputationBadge";
+import { countBoundaryTriggers } from "@/lib/boundaryStats";
 import { useI18n } from "@/lib/i18n";
 
 const CATEGORY_ACCENT: Record<string, string> = {
@@ -366,6 +367,7 @@ function SkillReputationPanel({ owner }: { owner: Address }) {
 
   const items = (attestations ?? []) as readonly AttestationLike[];
   const breakdown = computeReputation(items as AttestationLike[]);
+  const boundaryTriggers12mo = countBoundaryTriggers(items);
 
   const hasCallerRated = breakdown.avgRatingByCaller > 0;
   const hasProviderRated = breakdown.avgRatingByProvider > 0;
@@ -376,7 +378,11 @@ function SkillReputationPanel({ owner }: { owner: Address }) {
         <span className="text-[10px] uppercase tracking-[0.13em] text-magenta font-mono">
           Conviction-weighted reputation
         </span>
-        <ReputationBadge rawTotal={breakdown.score} size="md" />
+        <ReputationBadge
+          rawTotal={breakdown.score}
+          boundaryTriggers12mo={boundaryTriggers12mo}
+          size="md"
+        />
       </div>
       <div className="text-[10px] text-ink-faint font-mono">
         raw {formatScore(breakdown.score)} / 100 · 段位刻度 0-1000
