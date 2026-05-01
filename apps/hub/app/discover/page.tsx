@@ -472,7 +472,7 @@ function AgentRow({
             />
             <Detail
               label="attestations"
-              value={`${items.length} 条 · 已聚合到声誉公式`}
+              value={`${items.length} 条`}
             />
             <Detail
               label="活跃度"
@@ -482,12 +482,12 @@ function AgentRow({
           <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border/40">
             <Link
               href={`/agents/${owner}`}
-              className="btn-primary text-sm px-4 py-2"
+              className="btn-primary text-[12px] px-3 py-1.5"
             >
               查看完整履历 →
             </Link>
             <span className="text-[11px] text-ink-faint font-mono">
-              · 5 tab：概览 / 技能 / 评价 / 担保 / 法庭
+              5 tab：概览 / 技能 / 评价 / 担保 / 法庭
             </span>
           </div>
         </div>
@@ -572,13 +572,13 @@ function SkillRow({ rank, skill }: { rank: number; skill: SkillLike }) {
           <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border/40">
             <Link
               href={`/run?skillId=${skill.skillId.toString()}`}
-              className="btn-primary text-sm px-4 py-2"
+              className="btn-primary text-[12px] px-3 py-1.5"
             >
               调用此 skill →
             </Link>
             <Link
               href={`/agents/${skill.owner}`}
-              className="text-[13px] font-mono text-cyan hover:text-magenta underline underline-offset-2"
+              className="text-[12px] font-mono text-cyan hover:text-magenta underline underline-offset-2"
             >
               看 owner 主页 →
             </Link>

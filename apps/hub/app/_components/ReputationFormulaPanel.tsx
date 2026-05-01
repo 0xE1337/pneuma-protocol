@@ -39,18 +39,18 @@ const TIER_DISPLAY_COLORS: Record<string, string> = {
 export function ReputationFormulaPanel() {
   return (
     <details className="rounded-md border border-border bg-bg/40 group">
-      <summary className="cursor-pointer px-5 py-3 flex items-center gap-3 list-none select-none hover:bg-bg/70 transition-colors">
-        <span className="text-cyan font-mono text-[10px] uppercase tracking-[0.13em]">
+      <summary className="cursor-pointer px-5 py-3.5 flex items-center gap-3 list-none select-none hover:bg-bg/70 transition-colors">
+        <span className="text-cyan font-mono text-[11px] uppercase tracking-[0.13em]">
           公式公开
         </span>
-        <span className="text-ink text-sm">声誉如何计算</span>
-        <span className="ml-auto text-ink-faint text-[11px] font-mono group-open:rotate-90 transition-transform">
+        <span className="text-ink text-base">声誉如何计算</span>
+        <span className="ml-auto text-ink-faint text-[12px] font-mono group-open:rotate-90 transition-transform">
           ▶
         </span>
       </summary>
 
-      <div className="px-5 pb-5 pt-2 space-y-4 border-t border-border/60">
-        <p className="text-[12px] text-ink-dim leading-relaxed">
+      <div className="px-5 pb-5 pt-3 space-y-5 border-t border-border/60">
+        <p className="text-[13px] text-ink-dim leading-relaxed">
           声誉不是平台打的分。任何 dApp 装上 npm 包{" "}
           <code className="font-mono text-cyan">@pneuma/reputation-formula</code>{" "}
           + 链上 PneumaAttestation 数据，都能算出同一分数。下面是全部可调参数。
@@ -122,11 +122,11 @@ export function ReputationFormulaPanel() {
         </Section>
 
         <Section title="诚信段位（合规维度，反洗白阶梯）">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {Object.values(BOUNDARY_TIERS).map((tier) => (
               <div
                 key={tier.id}
-                className="flex items-start gap-2 text-[11px] font-mono leading-snug"
+                className="flex items-start gap-2 text-[12px] font-mono leading-snug"
               >
                 <span>{tier.emoji}</span>
                 <div className="flex flex-col gap-0.5 min-w-0 flex-1">
@@ -136,14 +136,14 @@ export function ReputationFormulaPanel() {
                   >
                     {tier.enName} · {tier.zhName}
                   </div>
-                  <div className="text-ink-faint text-[10px]">
+                  <div className="text-ink-faint text-[11px]">
                     {tier.description}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="text-[10px] text-ink-faint font-mono leading-relaxed mt-1.5">
+          <div className="text-[11px] text-ink-faint font-mono leading-relaxed mt-2">
             阶梯扣分 · 首次 -{BOUNDARY_PENALTY.FIRST_HIT} / 二次 -
             {BOUNDARY_PENALTY.SECOND_HIT} / 三次{" "}
             {BOUNDARY_PENALTY.THIRD_HIT_FREEZE
@@ -153,7 +153,7 @@ export function ReputationFormulaPanel() {
           </div>
         </Section>
 
-        <div className="text-[10px] text-ink-faint font-mono leading-relaxed pt-2 border-t border-border/40">
+        <div className="text-[11px] text-ink-faint font-mono leading-relaxed pt-2 border-t border-border/40">
           公式实现：
           <a
             href="https://github.com/pneuma-protocol/pneuma-protocol/tree/main/packages/reputation-formula"
@@ -195,20 +195,20 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <div className="text-[10px] uppercase tracking-[0.13em] text-magenta font-mono">
+    <div className="space-y-2">
+      <div className="text-[11px] uppercase tracking-[0.13em] text-magenta font-mono">
         {title}
       </div>
-      <div className="space-y-0.5">{children}</div>
+      <div className="space-y-1">{children}</div>
     </div>
   );
 }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between text-[11px] font-mono">
+    <div className="flex items-baseline justify-between gap-3 text-[12px] font-mono">
       <span className="text-ink-dim">{label}</span>
-      <span className="text-cyan font-semibold">{value}</span>
+      <span className="text-cyan font-semibold whitespace-nowrap">{value}</span>
     </div>
   );
 }
