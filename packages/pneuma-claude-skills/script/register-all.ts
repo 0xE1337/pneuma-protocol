@@ -109,25 +109,42 @@ async function main() {
     transport: http(RPC_URL),
   });
 
-  const mode = PUBLIC_BASE_URL ? "public-tunnel" : "localhost";
+  // 检测 mode：per-skill SKILL_URL_* > named tunnel PUBLIC_BASE_URL > localhost
+  const hasPerSkillUrls = Object.keys(ALL_SKILLS).some(
+    (id) => process.env[`SKILL_URL_${id.replace(/-/g, "_").toUpperCase()}`],
+  );
+  const mode = hasPerSkillUrls
+    ? "quick-tunnel-per-skill"
+    : PUBLIC_BASE_URL
+    ? "named-tunnel"
+    : "localhost";
   console.log(`\n🚀 注册 5 个 Claude skill 到 SkillRegistry`);
   console.log(`   chain:    ${CHAIN_ID}`);
   console.log(`   registry: ${SKILL_REGISTRY}`);
   console.log(`   owner:    ${account.address}`);
-  console.log(`   mode:     ${mode}`);
-  if (PUBLIC_BASE_URL) {
-    console.log(`   baseUrl:  ${PUBLIC_BASE_URL}\n`);
-  } else {
-    console.log(`   每 skill 用 localhost:<port>/api/run（演示日前换 tunnel）\n`);
-  }
+  console.log(`   mode:     ${mode}\n`);
 
   const envLines: string[] = [];
 
   for (const skill of Object.values(ALL_SKILLS)) {
     const def = skill.definition;
-    const endpoint = PUBLIC_BASE_URL
-      ? `${PUBLIC_BASE_URL}/${def.id}/api/run`
-      : `http://localhost:${LOCAL_PORTS[def.id] ?? 3100}/api/run`;
+
+    // Per-skill URL 优先（quick tunnel 模式：每 skill 一条独立 trycloudflare URL）
+    // env: SKILL_URL_PAPER_SUMMARY=https://abc.trycloudflare.com 等 5 个
+    const perSkillEnvKey = `SKILL_URL_${def.id.replace(/-/g, "_").toUpperCase()}`;
+    const perSkillUrl = process.env[perSkillEnvKey];
+
+    let endpoint: string;
+    if (perSkillUrl) {
+      // quick tunnel 模式：URL 直挂 /api/run（每条 tunnel 直接路由到一个端口）
+      endpoint = `${perSkillUrl.replace(/\/$/, "")}/api/run`;
+    } else if (PUBLIC_BASE_URL) {
+      // named tunnel 模式：path-based 同 host 路由
+      endpoint = `${PUBLIC_BASE_URL}/${def.id}/api/run`;
+    } else {
+      // localhost 模式（dev only，链上 endpoint 评委不可达）
+      endpoint = `http://localhost:${LOCAL_PORTS[def.id] ?? 3100}/api/run`;
+    }
 
     console.log(`  ⏳ ${def.name} (${def.id}) → ${endpoint}`);
     try {

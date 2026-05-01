@@ -11,6 +11,9 @@
     "build": "tsc",
     "register": "tsx script/register-all.ts",
     "register:tunnel": "tsx script/register-tunnel.ts",
+    "tunnels:up": "node script/start-tunnels.mjs",
+    "register:tunnels": "tsx script/register-tunnels.ts",
+    "deactivate:old": "tsx script/deactivate-old.ts",
     "seed-traffic": "tsx script/seed-traffic.ts",
     "smoke": "tsx script/smoke.ts"
   },
