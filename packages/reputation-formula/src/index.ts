@@ -44,3 +44,20 @@ export {
   type TierMeta,
   type TierId,
 } from "./tier.js";
+export {
+  computeReputationV3,
+  computePunishmentFactor,
+  computeSlashedRatio,
+  computeJudicialScoreV3,
+} from "./v3.js";
+export {
+  BOUNDARY_TIERS,
+  BOUNDARY_PENALTY,
+  ROLLING_WINDOW_SECONDS,
+  getBoundaryTier,
+  countRollingBoundaryTriggers,
+  applyBoundaryPenalty,
+  type BoundaryTierMeta,
+  type BoundaryTierId,
+} from "./boundary-tier.js";
+export { getEffectiveTier, type EffectiveTier } from "./effective-tier.js";

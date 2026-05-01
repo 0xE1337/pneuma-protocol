@@ -67,3 +67,57 @@ export interface ReputationV2Breakdown {
   social: DimensionScore;
   judicial: DimensionScore;
 }
+
+// ────────────────────────── v3 inputs ──────────────────────────
+
+/**
+ * PneumaCourt.getDispute(disputeId) 单条返回 —— v3 用来算 punishmentFactor +
+ * judicial accuracy。第三方 dApp 自行 decode 后传入。
+ */
+export interface DisputeRecordLike {
+  disputeId: bigint;
+  callId: bigint;
+  plaintiff: `0x${string}`;
+  defendant: `0x${string}`;
+  jurors: readonly `0x${string}`[];
+  /** 0=NONE, 1=VOTING, 2=RESOLVED */
+  status: number;
+  /** 0=PENDING, 1=GUILTY, 2=INNOCENT */
+  verdict: number;
+  /** unix seconds when filed */
+  filedAt?: bigint;
+}
+
+/**
+ * 一个 juror 在某 dispute 里的投票（PneumaCourt.jurorVerdict）—— v3 算
+ * judicial accuracy 用：jurorVerdict 跟 dispute.verdict 对比。
+ */
+export interface JurorVoteLike {
+  disputeId: bigint;
+  /** 0=PENDING（未投）, 1=GUILTY, 2=INNOCENT */
+  jurorVerdict: number;
+  /** dispute 最终裁决（同 DisputeRecordLike.verdict） */
+  finalVerdict: number;
+  /** dispute filedAt 用于 decay */
+  filedAt?: bigint;
+}
+
+/**
+ * v3 4+1 维 + 段位钳制数据 + 总分 breakdown
+ *
+ * 与 v2 的关系：
+ *   - economic / intellectual / social / judicial 仍是 0-100 维度分
+ *   - 但 economic / social 已经叠加 punishmentFactor / slashedRatio
+ *   - judicial 不再是 v2 的 placeholder=0，是真实 accuracy 计算
+ *   - 加 hasGuiltyRecord + boundaryTriggers12mo 字段供调用方决策段位钳制
+ */
+export interface ReputationV3Breakdown extends ReputationV2Breakdown {
+  /** Court guilty 统计衰减系数 (0-1)；越大越衰减 */
+  punishmentFactor: number;
+  /** 担保对象被 slash 的反向衰减系数 (0-1) */
+  slashedRatio: number;
+  /** 是否有 guilty 历史 —— 段位 hard cap 触发条件 */
+  hasGuiltyRecord: boolean;
+  /** rolling 12 个月内 OwnershipBoundary 触发数 */
+  boundaryTriggers12mo: number;
+}
