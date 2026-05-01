@@ -14,8 +14,9 @@
  *   - 复杂卡片留在 /agents/[address] 详情页
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useReadContract } from "wagmi";
 import { formatUnits, type Address } from "viem";
 import {
@@ -86,9 +87,8 @@ export default function DiscoverPage() {
           </p>
         </header>
 
-        {/* 自然语言搜索框 —— P2 阶段会接 planner LLM；现在是 stub
-            点击会跳到 /run smart 模式，把 query 透传过去 */}
-        <SearchBoxStub />
+        {/* 自然语言搜索框 —— planner LLM (planOnly) → 渲染 plan → 一键跳 /run 执行 */}
+        <SearchBox />
 
         {/* 公式公开 —— 折叠状态 */}
         <ReputationFormulaPanel />
@@ -140,43 +140,192 @@ export default function DiscoverPage() {
   );
 }
 
-/** 搜索框 stub —— P2 接 planner LLM 后会显示拆解 plan + 一键调用 */
-function SearchBoxStub() {
+interface PlanStep {
+  skillId: number;
+  skillName: string;
+  reason: string;
+  pricePerCall: string;
+}
+interface PlanOnlyResponse {
+  query: string;
+  plan: { steps: PlanStep[]; reasoning: string };
+}
+
+const QUERY_EXAMPLES = [
+  "帮我审计这个 0x... 合约的安全风险",
+  "查我钱包近 90 天有没有被薅羊毛",
+  "分析最近 30 天 ETH 价格 + 给一段总结",
+];
+
+/**
+ * SearchBox —— Discover 真智能搜索
+ *
+ * 流程：
+ *   1. 用户输入自然语言 → POST /api/orchestrate { query, planOnly: true }
+ *   2. 后端 discoverSkills + plan() → 返回拆解的 N 步 skill 调用（不上链）
+ *   3. 渲染 PlanCard：每步 skill 名 + 价格 + 理由 + 总价
+ *   4. 「一键执行 →」跳 /run?query=<encoded>，/run Smart 模式预填 + 一键执行
+ *
+ * 这里只做「想清楚」，真上链让 /run 处理（钱包签名 / Soul 选择 / 上链反馈）。
+ */
+function SearchBox() {
+  const router = useRouter();
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resp, setResp] = useState<PlanOnlyResponse | null>(null);
+
+  async function runPlanOnly() {
+    if (input.trim().length === 0) return;
+    setBusy(true);
+    setError(null);
+    setResp(null);
+    try {
+      const r = await fetch("/api/orchestrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: input.trim(), planOnly: true }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error ?? `HTTP ${r.status}`);
+      setResp(data as PlanOnlyResponse);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function jumpToRun() {
+    if (!input.trim()) return;
+    // /run Smart 模式接 ?mode=smart&query=...，自动预填 textarea
+    router.push(
+      `/run?mode=smart&query=${encodeURIComponent(input.trim())}`,
+    );
+  }
+
   return (
-    <div className="rounded-lg border border-magenta/30 bg-magenta/5 p-5 space-y-3">
+    <div className="rounded-lg border border-magenta/30 bg-magenta/5 p-5 space-y-4">
       <div className="flex items-baseline gap-2 flex-wrap">
         <span className="text-[10px] uppercase tracking-[0.13em] text-magenta font-mono">
-          ⚡ 智能搜索（即将上线）
+          ⚡ 智能搜索
         </span>
         <span className="text-[10px] text-ink-faint font-mono">
           自然语言 → AI 拆 plan → 一键调用
         </span>
       </div>
-      <div className="flex items-center gap-2">
+
+      <div className="flex flex-col sm:flex-row items-stretch gap-2">
         <input
           type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           placeholder="例：帮我审计这个合约 / 查我钱包是否被薅羊毛 / 分析最近 30 天 ETH 走势"
           className="input flex-1"
-          disabled
+          disabled={busy}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !busy) runPlanOnly();
+          }}
         />
         <button
           type="button"
-          disabled
-          className="btn-primary opacity-60 cursor-not-allowed text-sm whitespace-nowrap"
+          onClick={runPlanOnly}
+          disabled={busy || input.trim().length === 0}
+          className="btn-primary text-sm whitespace-nowrap"
         >
-          🔒 P2 上线
+          {busy ? "Planner 拆解中…" : "🔍 拆 plan"}
         </button>
       </div>
-      <p className="text-[11px] text-ink-faint font-mono leading-relaxed">
-        在那之前可以走{" "}
-        <Link
-          href="/run"
-          className="text-cyan hover:text-magenta underline underline-offset-2"
-        >
-          执行台 → Smart 模式
-        </Link>{" "}
-        手动输入需求。
+
+      {/* 示例点击 → 自动填入输入框 */}
+      {!resp && !busy && (
+        <div className="flex items-baseline gap-2 flex-wrap text-[11px] font-mono">
+          <span className="text-ink-faint">试试：</span>
+          {QUERY_EXAMPLES.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              onClick={() => setInput(ex)}
+              className="text-cyan hover:text-magenta underline underline-offset-2"
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {error && (
+        <div className="text-[11px] text-magenta bg-magenta/10 border border-magenta/40 rounded-md p-3 break-words font-mono">
+          {error}
+        </div>
+      )}
+
+      {resp && <PlanCard plan={resp.plan} onExecute={jumpToRun} />}
+    </div>
+  );
+}
+
+function PlanCard({
+  plan,
+  onExecute,
+}: {
+  plan: { steps: PlanStep[]; reasoning: string };
+  onExecute: () => void;
+}) {
+  const totalCost = plan.steps.reduce(
+    (sum, s) => sum + Number(s.pricePerCall || "0") / 1e6,
+    0,
+  );
+
+  return (
+    <div className="rounded-md border border-cyan/40 bg-cyan/5 p-4 space-y-3 animate-fade-in">
+      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+        <div className="text-[10px] uppercase tracking-[0.13em] text-cyan font-mono">
+          AI 拆出 {plan.steps.length} 步
+        </div>
+        <div className="text-[11px] font-mono text-soul-soft">
+          预估 {totalCost.toFixed(4)} USDC
+        </div>
+      </div>
+
+      <p className="text-[12px] text-ink-dim italic leading-relaxed">
+        {plan.reasoning}
       </p>
+
+      <div className="space-y-2">
+        {plan.steps.map((step, i) => (
+          <div
+            key={`${step.skillId}-${i}`}
+            className="bg-bg/60 border border-border rounded p-3 space-y-1"
+          >
+            <div className="flex items-baseline justify-between gap-2 flex-wrap font-mono text-[12px]">
+              <span className="text-magenta">
+                Step {String(i + 1).padStart(2, "0")} → {step.skillName}{" "}
+                <span className="text-ink-faint">#{step.skillId}</span>
+              </span>
+              <span className="text-soul-soft">
+                {(Number(step.pricePerCall) / 1e6).toFixed(4)} USDC
+              </span>
+            </div>
+            <div className="text-[11px] text-ink-dim leading-relaxed">
+              {step.reason}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+        <button
+          type="button"
+          onClick={onExecute}
+          className="btn-primary text-sm flex-1"
+        >
+          一键执行 → 跳执行台
+        </button>
+        <span className="text-[10px] text-ink-faint font-mono">
+          钱包签名后链上 settle
+        </span>
+      </div>
     </div>
   );
 }

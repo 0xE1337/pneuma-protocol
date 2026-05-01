@@ -130,6 +130,7 @@ function RunPageInner() {
   );
 
   // 模式切换：手动 vs 自然语言（接 /api/orchestrate planner LLM）
+  // /discover 一键执行跳过来时会带 ?mode=smart，进页后由下面 useEffect 同步
   const [mode, setMode] = useState<"manual" | "smart">("manual");
 
   // 用户选择
@@ -160,9 +161,18 @@ function RunPageInner() {
   const skills = (skillsData ?? []) as readonly SkillRow[];
 
   // /agents/[address] 详情页"调用此能力"按钮带 ?skillId=X 跳过来时自动锁定该 skill
-  // 加 deeplink 支持后，从 Agent 视角到具体调用之间不再断链
+  // /discover SearchBox 一键执行带 ?mode=smart&query=... 跳过来时切到 smart 模式 + 预填
+  // 加 deeplink 支持后，从 Agent / Discover 视角到具体调用之间不再断链
   const searchParams = useSearchParams();
   const querySkillIdRaw = searchParams.get("skillId");
+  const queryModeRaw = searchParams.get("mode");
+  const queryPrefill = searchParams.get("query") ?? "";
+
+  // 进页后只同步一次 mode（避免用户手动切回 manual 又被 url 拽回 smart）
+  useEffect(() => {
+    if (queryModeRaw === "smart") setMode("smart");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 默认选择 skill：优先 ?skillId（若 valid），其次 list[0]
   useEffect(() => {
@@ -449,6 +459,7 @@ function RunPageInner() {
             tokenId={selectedTokenId}
             souls={souls}
             onPickSoul={onPickSoul}
+            initialQuery={queryPrefill}
           />
         )}
 
@@ -1193,12 +1204,15 @@ function SmartRunPanel({
   tokenId,
   souls,
   onPickSoul,
+  initialQuery = "",
 }: {
   tokenId: bigint | null;
   souls: SoulSummary[];
   onPickSoul: (id: bigint) => void;
+  /** /discover 一键执行跳过来时预填的 query */
+  initialQuery?: string;
 }) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialQuery);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resp, setResp] = useState<OrchestrateResponse | null>(null);

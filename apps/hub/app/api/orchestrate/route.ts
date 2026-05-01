@@ -31,22 +31,50 @@ const SoulNFTAbi = [
 
 export async function POST(req: Request) {
   try {
-    const { query, tokenId } = (await req.json()) as { query: string; tokenId?: number };
+    const body = (await req.json()) as {
+      query: string;
+      tokenId?: number;
+      /** 只跑 planner，不上链 execute —— Discover 用这个 */
+      planOnly?: boolean;
+    };
+    const { query, tokenId, planOnly = false } = body;
     if (!query) {
       return NextResponse.json({ error: "missing query" }, { status: 400 });
     }
 
     const publicClient = createPublicClient({ transport: http(RPC) });
 
-    const callerTBA = await publicClient.readContract({
-      address: SOUL_NFT,
-      abi: SoulNFTAbi,
-      functionName: "tbaOf",
-      args: [BigInt(tokenId ?? 1)],
-    });
+    // planOnly 模式不需要 callerTBA（不上链）；省一次 RPC
+    const callerTBA = planOnly
+      ? null
+      : await publicClient.readContract({
+          address: SOUL_NFT,
+          abi: SoulNFTAbi,
+          functionName: "tbaOf",
+          args: [BigInt(tokenId ?? 1)],
+        });
 
     const skills = await discoverSkills(RPC, SKILL_REGISTRY);
     const planResult = await plan(query, skills);
+
+    if (planOnly) {
+      // 把每步 enrich 上 skill 元信息（name + price），让前端渲染漂亮 plan card
+      // DiscoveredSkill.pricePerCallUsdc 已经是 6-decimals string（USDC raw 单位），
+      // 前端再除以 1e6 转人类可读 USDC
+      const stepsEnriched = planResult.steps.map((step) => {
+        const skill = skills.find((s) => s.skillId === step.skillId);
+        return {
+          ...step,
+          skillName: skill?.name ?? `#${step.skillId}`,
+          pricePerCall: skill?.pricePerCallUsdc ?? "0",
+        };
+      });
+      return NextResponse.json({
+        query,
+        plan: { ...planResult, steps: stepsEnriched },
+        planOnly: true,
+      });
+    }
 
     const executor = new Executor({
       rpcUrl: RPC,
@@ -54,7 +82,7 @@ export async function POST(req: Request) {
       paymentToken: USDC_TOKEN,
       skillRegistry: SKILL_REGISTRY,
       privateKey: PRIVATE_KEY,
-      callerTBA,
+      callerTBA: callerTBA as Address,
     });
 
     const results = await executor.executeParallel(planResult.steps, skills);
