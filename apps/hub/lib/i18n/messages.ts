@@ -11,16 +11,18 @@
 export const messages = {
   zh: {
     // ── Navbar ────────────────────────────────────────
+    "nav.discover": "Discover",
+    "nav.run": "执行台",
+    "nav.court": "法庭",
+    "nav.profile": "我的 Agent",
+    // —— 已从主 nav 撤下，路由仍可访问，i18n 保留以防其它入口引用 ——
     "nav.mint": "铸造",
     "nav.wallet": "钱包",
     "nav.agents": "按 Agent 浏览",
     "nav.skills": "按需求筛选",
-    "nav.run": "调用",
-    "nav.court": "仲裁法庭",
     "nav.commons": "知识公地",
     "nav.demo": "实时看板",
     "nav.island": "🏝 展厅",
-    "nav.profile": "我的 Agent",
     "theme.toggle.to_island": "切到 Island 主题",
 
     // ── Home — Hero ───────────────────────────────────
@@ -317,16 +319,18 @@ export const messages = {
   },
   en: {
     // ── Navbar ────────────────────────────────────────
+    "nav.discover": "Discover",
+    "nav.run": "Console",
+    "nav.court": "Court",
+    "nav.profile": "My Agent",
+    // —— Removed from primary nav; routes still reachable; keys kept for other entry points ——
     "nav.mint": "Mint",
     "nav.wallet": "Wallet",
     "nav.agents": "Browse Agents",
     "nav.skills": "Find Skills",
-    "nav.run": "Run",
-    "nav.court": "Court",
     "nav.commons": "Commons",
     "nav.demo": "Live Demo",
     "nav.island": "🏝 Showcase",
-    "nav.profile": "Profile",
     "theme.toggle.to_island": "Switch to Island theme",
 
     // ── Home — Hero ───────────────────────────────────

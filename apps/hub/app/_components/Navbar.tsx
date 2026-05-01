@@ -21,21 +21,24 @@ import { ThemeToggle } from "./ThemeToggle";
  *   - 不用 useTheme() hook 跑分支，避免 SSR / hydration mismatch
  */
 
+/**
+ * 主 nav 4 项 IA：Discover · 执行台 · 法庭 · 我的 Agent
+ *
+ * 设计取舍：
+ *   - Agent / Skill 两个对象类型合并为 Discover 入口，避免逼用户先做"找谁 / 找什么"分类
+ *   - /run 留作执行台（手动 + Smart 双模式）
+ *   - /court 在主 nav 而非藏二级，因为多陪审员争议是协议层差异化叙事
+ *   - 铸造、钱包、看板从主 nav 撤下：
+ *       /mint            → 首页 hero CTA + /run /profile 空状态入口
+ *       /wallet          → 即将合并进 /profile 顶部钱包 tab
+ *       /demo-dashboard  → 即将迁移到 /admin/dashboard + 白名单 gating
+ *   - /agents /skills /commons /island-demo 路由仍可访问，仅从主 nav 隐藏
+ */
 const NAV_ITEMS = [
-  { href: "/mint", labelKey: "nav.mint" as const },
-  { href: "/wallet", labelKey: "nav.wallet" as const },
-  // agents 是主入口（按 owner 聚合的 sovereign Agent 网络），skills 是次入口（按能力筛选）
-  { href: "/agents", labelKey: "nav.agents" as const },
-  { href: "/skills", labelKey: "nav.skills" as const },
+  { href: "/discover", labelKey: "nav.discover" as const },
   { href: "/run", labelKey: "nav.run" as const },
-  // PneumaCourt —— 多陪审员仲裁，治理层创新
   { href: "/court", labelKey: "nav.court" as const },
-  // 演示日主战场：实时 multi-agent dashboard，订阅 9 类链上事件，真 tx hash
-  { href: "/demo-dashboard", labelKey: "nav.demo" as const },
   { href: "/profile", labelKey: "nav.profile" as const },
-  // 已从 navbar 隐藏（合约层完整保留，路由仍可访问）：
-  //   /commons        —— Knowledge Commons，pre-purchase narrative 是 v1.1 议题
-  //   /island-demo    —— 视觉彩蛋页，跟核心叙事不正交
 ];
 
 export function Navbar() {
