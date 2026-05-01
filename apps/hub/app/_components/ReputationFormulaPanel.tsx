@@ -23,6 +23,8 @@ import {
   DECAY_LAMBDA,
   AGE_RAMP_DAYS,
   TIERS,
+  BOUNDARY_TIERS,
+  BOUNDARY_PENALTY,
 } from "@pneuma/reputation-formula";
 
 const TIER_DISPLAY_COLORS: Record<string, string> = {
@@ -81,7 +83,7 @@ export function ReputationFormulaPanel() {
           />
         </Section>
 
-        <Section title="段位（display 0-1000 区间，产品决策可调）">
+        <Section title="声誉段位（能力维度，display 0-1000 区间）">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {TIERS.map((tier) => (
               <div
@@ -100,6 +102,57 @@ export function ReputationFormulaPanel() {
           </div>
         </Section>
 
+        <Section title="v3 court-aware 调整">
+          <Row
+            label="punishmentFactor（Court guilty Laplace smoothing）"
+            value="guilty / (guilty + innocent + 5)"
+          />
+          <Row
+            label="slashedRatio（担保过的人多少被 slash）"
+            value="slashed / (totalEndorsements + 1)"
+          />
+          <Row
+            label="judicial accuracy（陪审员投票准确率）"
+            value="sqrt(votes) × accuracy × decay × 8"
+          />
+          <Row
+            label="段位 hard cap（court guilty 历史 → 钳到 Silver）"
+            value="不衰减 · 永久标签"
+          />
+        </Section>
+
+        <Section title="诚信段位（合规维度，反洗白阶梯）">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {Object.values(BOUNDARY_TIERS).map((tier) => (
+              <div
+                key={tier.id}
+                className="flex items-start gap-2 text-[11px] font-mono leading-snug"
+              >
+                <span>{tier.emoji}</span>
+                <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                  <div
+                    className="font-semibold uppercase tracking-wider"
+                    style={{ color: tier.color }}
+                  >
+                    {tier.enName} · {tier.zhName}
+                  </div>
+                  <div className="text-ink-faint text-[10px]">
+                    {tier.description}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-[10px] text-ink-faint font-mono leading-relaxed mt-1.5">
+            阶梯扣分 · 首次 -{BOUNDARY_PENALTY.FIRST_HIT} / 二次 -
+            {BOUNDARY_PENALTY.SECOND_HIT} / 三次{" "}
+            {BOUNDARY_PENALTY.THIRD_HIT_FREEZE
+              ? "永久冻结增长"
+              : "继续扣分"}
+            ；rolling 12 个月窗口（窗口外触发自动滑出）。
+          </div>
+        </Section>
+
         <div className="text-[10px] text-ink-faint font-mono leading-relaxed pt-2 border-t border-border/40">
           公式实现：
           <a
@@ -110,8 +163,24 @@ export function ReputationFormulaPanel() {
           >
             packages/reputation-formula
           </a>
+          {" · "}48 单元测试锁定参数 ·{" "}
+          <a
+            href="https://github.com/pneuma-protocol/pneuma-protocol/blob/main/docs/PUNISHMENT_DESIGN.md"
+            target="_blank"
+            rel="noreferrer"
+            className="text-cyan hover:text-magenta underline underline-offset-2"
+          >
+            PUNISHMENT_DESIGN.md
+          </a>
           {" · "}
-          单元测试 + 数值锁定，公式漂移时自动 fail。
+          <a
+            href="https://github.com/pneuma-protocol/pneuma-protocol/blob/main/docs/ANTI_SYBIL_DESIGN.md"
+            target="_blank"
+            rel="noreferrer"
+            className="text-cyan hover:text-magenta underline underline-offset-2"
+          >
+            ANTI_SYBIL_DESIGN.md
+          </a>
         </div>
       </div>
     </details>
