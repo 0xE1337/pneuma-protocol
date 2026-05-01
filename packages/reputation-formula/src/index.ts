@@ -35,3 +35,12 @@ export {
   computeJudicialScore,
   computeReputationV2,
 } from "./v2.js";
+export {
+  scaleToDisplayScore,
+  getTier,
+  tierProgress,
+  rankInTier,
+  TIERS,
+  type TierMeta,
+  type TierId,
+} from "./tier.js";
