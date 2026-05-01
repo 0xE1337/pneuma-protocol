@@ -2,16 +2,15 @@
  * Shared types — 5 个 skill server 的接口契约。
  *
  * 设计原则：
- *   - 每个 skill 暴露一个 `definition`（元数据 + Claude prompt + tool hint）
+ *   - 每个 skill 暴露一个 `definition`（元数据 + system prompt）
  *     和一个 `handler`（接 caller body，返回真实结果）
  *   - server.ts 根据 env SKILL_NAME 选定 skill，挂 hono + x402 middleware
  *   - 同一脚手架跑 5 份进程（5 个端口），每份只跑一个 skill
- *
- * 这种 plug-in 风格让评委一眼看到 5 个真独立的 sovereign agent 进程，
- * 每个有自己的 PID / port / Anthropic 调用统计 —— 协议层"sovereign"叙事的工程证据。
+ *   - reasoning backend 是**本地 Claude Code CLI**（spawn `claude -p`），
+ *     不是 Anthropic API 调用——零 API key + 走用户订阅
  */
 
-import type Anthropic from "@anthropic-ai/sdk";
+import type { CallClaudeArgs, CallClaudeResult } from "./claude-cli.js";
 
 export interface SkillDefinition {
   /** 唯一 ID（kebab-case；env 变量 SKILL_ID_<UPPERCASE_SNAKE> 与之对应） */
@@ -28,8 +27,8 @@ export interface SkillDefinition {
   systemPrompt: string;
   /** 默认评分（5 = 满分；x402 middleware settle 时写 attestation 用） */
   defaultRating: number;
-  /** 是否需要 web fetch 工具（影响 Claude tools 配置） */
-  needsWebFetch: boolean;
+  /** Claude CLI 子进程超时（ms），默认 90000 */
+  timeoutMs?: number;
 }
 
 export type SkillId =
@@ -39,31 +38,48 @@ export type SkillId =
   | "creative-write"
   | "quick-reasoning";
 
-/**
- * Caller 发来的请求 body —— 每个 skill 不同字段；handler 自行 narrow
- */
+/** Caller 发来的请求 body —— 每个 skill 不同字段；handler 自行 narrow */
 export type SkillInput = Record<string, unknown>;
 
 /**
  * Skill 返回的结果 —— callId / paidAmount 由 x402 middleware 注入，
- * handler 只管 result + tokens + durationMs
+ * handler 只管 result + durationMs
  */
 export interface SkillOutput {
+  /** Claude 输出的结构化结果（已 parse 的 JSON 或 raw 字符串） */
   result: string | Record<string, unknown>;
-  /** Claude 输入 token 数（debug + 成本核算） */
-  inputTokens?: number;
-  /** Claude 输出 token 数 */
-  outputTokens?: number;
-  /** Claude 调用耗时 ms */
+  /** Claude CLI 子进程耗时 ms（含启动 + reasoning） */
   claudeMs: number;
-  /** 是否触发了工具调用 */
-  toolUseCount?: number;
+  /** Claude raw stdout（debug 用；可选） */
+  rawText?: string;
 }
 
 /**
- * Handler 签名 —— skill 实现者只需写这一个函数
+ * Handler 签名 —— skill 实现者只需写这一个函数。
+ *
+ * ctx.callClaude 是已经包装过的 spawn helper：
+ *   const { data, durationMs, raw } = await ctx.callClaude({
+ *     systemPrompt: definition.systemPrompt,
+ *     userMessage: "...",
+ *   });
  */
 export type SkillHandler = (
   input: SkillInput,
-  ctx: { client: Anthropic; definition: SkillDefinition },
+  ctx: SkillHandlerContext,
 ) => Promise<SkillOutput>;
+
+export interface SkillHandlerContext {
+  definition: SkillDefinition;
+  /**
+   * spawn `claude -p` 跑一次 reasoning，自动 JSON parse（失败 fallback raw）。
+   * 详见 ./claude-cli.ts 的 callClaudeJson
+   */
+  callClaude: <T = unknown>(args: CallClaudeArgs) => Promise<{
+    data: T | string;
+    durationMs: number;
+    raw: string;
+  }>;
+}
+
+// 让 callClaude 类型直接 export 出来给 skill 文件复用
+export type { CallClaudeArgs, CallClaudeResult };

@@ -1,19 +1,22 @@
 /**
- * server.ts —— 单 skill 进程的 Hono + x402 + Anthropic 入口
+ * server.ts —— 单 skill 进程的 Hono + x402 + 本地 claude CLI 入口
  *
  * 同一份代码跑 5 个进程（5 个端口），每份通过环境变量 `SKILL_ID` 选定要 host
  * 的 skill。这种 plug-in 启动风格让 5 个 sovereign agent 进程**真的独立**：
  *   - 各自的 PID
  *   - 各自的端口
  *   - 各自的 SkillRegistry skillId
- *   - 各自的 Anthropic API call 统计
+ *   - 各自 spawn 自己的 claude 子进程
+ *
+ * **零 API key**：reasoning 走本地 `claude -p`（OAuth keychain，订阅计费），
+ * 不调 Anthropic API；详见 ./claude-cli.ts 文件头注释。
  *
  * 用法：
  *
  *   SKILL_ID=paper-summary tsx src/server.ts
  *   SKILL_ID=code-review   PORT_OVERRIDE=3102 tsx src/server.ts
  *
- * 或者用 script/start-all.mjs 一次起 5 个。
+ * 或 script/start-all.mjs 一次起 5 个。
  */
 
 import { config as loadEnv } from "dotenv";
@@ -25,16 +28,20 @@ loadEnv({ path: resolve(__dirname, "../.env") });
 loadEnv({ path: resolve(__dirname, "../.env.local"), override: false });
 // 也读 monorepo 根 .env.local，复用 ARC RPC / SkillRegistry 地址等共享值
 loadEnv({ path: resolve(__dirname, "../../../.env.local"), override: false });
+loadEnv({
+  path: resolve(__dirname, "../../../apps/hub/.env.local"),
+  override: false,
+});
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
-import Anthropic from "@anthropic-ai/sdk";
 import { x402 } from "@pneuma/x402/hono";
 import type { Address, Hex } from "viem";
 
 import { ALL_SKILLS } from "./skills/index.js";
 import type { SkillDefinition, SkillId, SkillHandler } from "./types.js";
+import { callClaudeJson } from "./claude-cli.js";
 
 // ────────────────────────────────────────────────────────────────────────
 // 解析 env：决定本进程 host 哪个 skill
@@ -54,7 +61,7 @@ if (!skill) {
 
 const { definition, handler } = skill;
 
-// 链上 skillId（注册后回填到 .env）—— 跟 SKILL_ID 字符串区分开
+// 链上 skillId（注册后回填到 .env）
 const ENV_SKILL_ID_KEY = `SKILL_ID_${definition.id
   .replace(/-/g, "_")
   .toUpperCase()}`;
@@ -73,10 +80,6 @@ const RPC_URL = process.env.ARC_TESTNET_RPC_URL!;
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 5042002);
 
 // 启动前 fail-fast 校验
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error("❌ ANTHROPIC_API_KEY 未设置（在 .env 或 monorepo 根 .env.local）");
-  process.exit(1);
-}
 if (!ON_CHAIN_SKILL_ID) {
   console.error(
     `❌ ${ENV_SKILL_ID_KEY} 未设置。先跑 \`pnpm register\` 注册 5 个 skill 到链上，把回写的 ID 填到 .env。`,
@@ -84,17 +87,9 @@ if (!ON_CHAIN_SKILL_ID) {
   process.exit(1);
 }
 if (!PRIVATE_KEY) {
-  console.error("❌ DEPLOYER_PRIVATE_KEY 未设置");
+  console.error("❌ DEPLOYER_PRIVATE_KEY 未设置（应继承自 monorepo 根 .env.local）");
   process.exit(1);
 }
-
-// ────────────────────────────────────────────────────────────────────────
-// Anthropic client（进程级单例）
-// ────────────────────────────────────────────────────────────────────────
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 // ────────────────────────────────────────────────────────────────────────
 // Hono app
@@ -123,7 +118,7 @@ app.get("/", (c) =>
     description: definition.description,
     category: definition.category,
     pricePerCallUsdc: (Number(definition.pricePerCall) / 1e6).toString(),
-    poweredBy: "Anthropic Claude (sovereign agent on demonstrator's machine)",
+    poweredBy: "local claude CLI (Claude Code subscription, no API key)",
     defaultRating: definition.defaultRating,
   }),
 );
@@ -147,8 +142,8 @@ app.post(
 
     try {
       const output = await handler(body, {
-        client: anthropic,
         definition,
+        callClaude: callClaudeJson,
       });
 
       return c.json({
@@ -183,7 +178,7 @@ console.log(`│   skillId       ${ON_CHAIN_SKILL_ID}`);
 console.log(`│   port          ${PORT}`);
 console.log(`│   pricePerCall  ${Number(definition.pricePerCall) / 1e6} USDC`);
 console.log(`│   category      ${definition.category}`);
-console.log(`│   model         claude-sonnet-4-5 (Anthropic SDK)`);
+console.log(`│   reasoning     local claude CLI (零 API key, 走订阅)`);
 console.log(`╰───────────────────────────────────────────────────`);
 
 serve({ fetch: app.fetch, port: PORT });

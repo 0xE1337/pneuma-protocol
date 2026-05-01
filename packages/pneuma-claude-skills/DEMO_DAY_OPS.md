@@ -1,10 +1,30 @@
 # 演示日运维 Checklist
 
 > 这份是给"南客松 S2 演示日"用的实操 checklist。建议演示前一晚走一遍，演示当天再走一遍。
+>
+> **核心原则**：reasoning 走你**本地的 Claude Code 订阅**（`claude -p` spawn 子进程）。
+> 不需要 ANTHROPIC_API_KEY，不产生 per-token 计费。
 
 ---
 
 ## 演示前一晚（建议提前 12 小时）
+
+### 0. 验证 Claude Code 本地可用
+
+```bash
+# 必须看到版本号
+claude --version
+# → 2.x.y (Claude Code)
+
+# 必须能进 interactive 不被要求 login
+claude
+# 进入交互模式直接 Ctrl+C 退出即可——只要不弹"login first"就 OK
+
+# 直接 spawn 验证
+cd packages/pneuma-claude-skills
+pnpm smoke
+# 看到 "Smoke 通过" 才能继续
+```
 
 ### 1. 链上注册全部就绪
 

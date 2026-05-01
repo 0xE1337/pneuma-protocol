@@ -1,7 +1,7 @@
 {
   "name": "@pneuma/claude-skills",
   "version": "0.1.0",
-  "description": "5 sovereign-agent skill servers backed by Anthropic Claude — runs on the demonstrator's own laptop, exposed via Cloudflare Tunnel, settled on-chain via x402.",
+  "description": "5 sovereign-agent skill servers backed by the demonstrator's local `claude` CLI (Claude Code subscription). No Anthropic API key, no per-token billing.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,10 +10,10 @@
     "start:all": "node script/start-all.mjs",
     "build": "tsc",
     "register": "tsx script/register-all.ts",
-    "seed-traffic": "tsx script/seed-traffic.ts"
+    "seed-traffic": "tsx script/seed-traffic.ts",
+    "smoke": "tsx script/smoke.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
     "@hono/node-server": "^1.13.0",
     "@pneuma/x402": "workspace:*",
     "dotenv": "^16.4.5",
