@@ -405,18 +405,13 @@ function RunPageInner() {
 
       <div className="relative max-w-7xl mx-auto px-8 pt-12 pb-24">
         <header className="mb-10 space-y-4 max-w-2xl animate-fade-in">
-          <span className="pill-live">x402 · Wallet-signed</span>
+          <span className="pill-live">{t("run.pill")}</span>
           <h1 className="display text-4xl md:text-5xl">{t("run.title")}</h1>
-          <p className="text-ink-dim leading-relaxed">
-            Approve + escrow are signed by the connected wallet. Service settles on-chain
-            and emits an attestation tied to{" "}
-            <span className="text-cyan font-mono">your</span> Soul TBA — history follows the
-            NFT, no platform lock-in.
-          </p>
+          <p className="text-ink-dim leading-relaxed">{t("run.subtitle")}</p>
         </header>
 
         {/* 模式切换 —— Manual = 老的手动选 Soul + Skill；Smart = 自然语言 → planner LLM 拆解 → 并行调用 */}
-        <div className="mb-8 flex items-center gap-2">
+        <div className="mb-8 flex items-center gap-2 flex-wrap">
           <span className="text-[10px] uppercase tracking-[0.13em] text-ink-faint font-mono">
             Mode:
           </span>
@@ -429,7 +424,7 @@ function RunPageInner() {
                 : "border-border bg-bg/40 text-ink-dim hover:border-soul/40"
             }`}
           >
-            Manual · 手选 Soul + Skill
+            {t("run.mode.manual")}
           </button>
           <button
             type="button"
@@ -440,7 +435,7 @@ function RunPageInner() {
                 : "border-border bg-bg/40 text-ink-dim hover:border-soul/40"
             }`}
           >
-            ⚡ Smart · 自然语言 → 多 skill 并行
+            {t("run.mode.smart")}
           </button>
         </div>
 
@@ -482,13 +477,21 @@ function RunPageInner() {
                   </div>
                 )}
                 {!soulsLoading && souls.length === 0 && (
-                  <div className="text-sm text-ink-dim leading-relaxed">
-                    No Soul yet on this wallet.{" "}
+                  <div className="rounded-md border border-soul/30 bg-soul/5 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-soul-soft text-lg">◈</span>
+                      <span className="text-sm font-medium text-ink">
+                        {t("run.no_soul.title")}
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-ink-dim leading-relaxed">
+                      {t("run.no_soul.desc")}
+                    </p>
                     <Link
                       href="/mint"
-                      className="text-soul-soft underline underline-offset-2"
+                      className="inline-block text-[12px] font-mono text-soul-soft hover:text-magenta underline underline-offset-2"
                     >
-                      Mint one first →
+                      {t("run.no_soul.cta")}
                     </Link>
                   </div>
                 )}
@@ -721,14 +724,35 @@ const SkillPick = memo(function SkillPick({
 });
 
 function PlaceholderPanel() {
+  const { t } = useI18n();
+  const bullets = [
+    t("run.placeholder.b1"),
+    t("run.placeholder.b2"),
+    t("run.placeholder.b3"),
+    t("run.placeholder.b4"),
+  ];
   return (
-    <div className="surface-glow p-12 text-center flex flex-col items-center gap-3">
-      <div className="text-magenta text-3xl">⬡</div>
-      <h3 className="display text-xl">Ready when you are</h3>
-      <p className="text-ink-dim text-sm max-w-md leading-relaxed">
-        Pick a Soul + a Skill on the left, type your input, then sign 1-2 transactions.
-        Settlement & attestation land on-chain in ~5s.
-      </p>
+    <div className="surface-glow p-8 md:p-10 flex flex-col gap-5">
+      <div className="flex items-center gap-3">
+        <span className="text-magenta text-2xl">⬡</span>
+        <h3 className="display text-xl">{t("run.placeholder.title")}</h3>
+      </div>
+      <ul className="space-y-2.5">
+        {bullets.map((b, i) => (
+          <li
+            key={i}
+            className="flex items-start gap-3 text-sm text-ink leading-relaxed"
+          >
+            <span className="text-cyan font-mono mt-0.5 shrink-0">›</span>
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="pt-4 border-t border-border">
+        <p className="text-[12px] text-ink-dim leading-relaxed font-mono">
+          {t("run.placeholder.hint")}
+        </p>
+      </div>
     </div>
   );
 }

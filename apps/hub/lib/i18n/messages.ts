@@ -185,7 +185,6 @@ export const messages = {
     "skills.empty": "尚无 active skill。先 mint Soul → `pneuma serve` 起一个端点，或 `pneuma anet bootstrap` 把现有 anet 服务接入。",
     "skills.badge.per_byte": "per-byte",
     "skills.badge.flat_rate": "flat-rate",
-    "skills.empty": "暂无注册的 skill",
 
     // ── Agents network — main entry (sovereign Agent 视角) ───
     "agents.eyebrow": "Agent Network",
@@ -255,7 +254,23 @@ export const messages = {
       "上游模型 + markup 是反中转透明度抓手。市场逻辑会自动惩罚高 markup：caller 看得到、读得到评论、用脚投票。",
 
     // ── Run page ──────────────────────────────────────
-    "run.title": "调用 Skill",
+    "run.title": "让 Agent 帮你做事",
+    "run.pill": "付费调用 · 钱包签名",
+    "run.subtitle":
+      "选一个能力，写下你的需求，钱包签名后链上自动结算 USDC——你拿到结果，调用记录永远绑在你的 Soul 上，转 NFT 时跟着走。",
+    "run.mode.manual": "手选 · 我知道用哪个 skill",
+    "run.mode.smart": "⚡ 智能 · 我只描述需求",
+    "run.placeholder.title": "你会拿到什么",
+    "run.placeholder.b1": "真实可用的结果——不是 demo 截图",
+    "run.placeholder.b2": "链上 USDC 结算回执，explorer 可验",
+    "run.placeholder.b3": "挂在你 Soul 上的 attestation，转 NFT 时一起走",
+    "run.placeholder.b4": "平均 5 秒 settle，全程不要平台账户",
+    "run.placeholder.hint":
+      "左边选一个 Soul 和一个 Skill，输入需求，签 1-2 笔交易，就这么简单。",
+    "run.no_soul.title": "先有一个 Soul",
+    "run.no_soul.desc":
+      "Soul 是你在 Pneuma 的 ERC-721 身份卡，自带一个 ERC-6551 钱包，所有调用记录都落在它身上。",
+    "run.no_soul.cta": "30 秒铸造 →",
     "run.step.connect": "连接钱包",
     "run.step.pick_soul": "选择 Soul",
     "run.step.pick_skill": "选择 Skill",
@@ -475,7 +490,6 @@ export const messages = {
     "skills.badge.flat_rate": "flat-rate",
     "skills.col.rep": "Reputation",
     "skills.col.calls": "Calls",
-    "skills.empty": "No skills registered yet",
 
     // ── Agents network — main entry (sovereign Agent view) ───
     "agents.eyebrow": "Agent Network",
@@ -545,7 +559,23 @@ export const messages = {
       "Upstream + markup is the anti-middleman transparency hook. The market punishes excessive markup: callers see it, read the reviews, vote with their feet.",
 
     // ── Run page ──────────────────────────────────────
-    "run.title": "Call a Skill",
+    "run.title": "Get an Agent to do things for you",
+    "run.pill": "Pay-per-call · Wallet-signed",
+    "run.subtitle":
+      "Pick a skill, type what you need, sign with your wallet — settlement and the on-chain receipt land on your Soul automatically. Transfer the NFT and the history follows.",
+    "run.mode.manual": "Manual · I know the skill",
+    "run.mode.smart": "⚡ Smart · I just describe my need",
+    "run.placeholder.title": "What you'll get",
+    "run.placeholder.b1": "A real, usable result — not a demo screenshot",
+    "run.placeholder.b2": "On-chain USDC receipt, verifiable on the explorer",
+    "run.placeholder.b3": "An attestation pinned to your Soul that travels with the NFT",
+    "run.placeholder.b4": "~5s settle, no platform account needed",
+    "run.placeholder.hint":
+      "Pick a Soul + a Skill on the left, type your input, sign 1-2 transactions.",
+    "run.no_soul.title": "Mint your Soul first",
+    "run.no_soul.desc":
+      "Your Soul is the ERC-721 ID card on Pneuma — it carries an ERC-6551 wallet, and every call lands on it.",
+    "run.no_soul.cta": "Mint in 30s →",
     "run.step.connect": "Connect wallet",
     "run.step.pick_soul": "Pick Soul",
     "run.step.pick_skill": "Pick Skill",
