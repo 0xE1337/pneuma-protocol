@@ -1,13 +1,17 @@
 /**
  * useMySouls — 反查当前钱包持有的 Soul tokenIds
  *
- * 设计：
- *   1. SoulNFT 继承标准 ERC-721（未继承 ERC721Enumerable），所以没有
- *      `tokenOfOwnerByIndex` 这种 O(1) 反查；要靠链上事件回扫。
- *   2. 用 viem 的 `getLogs` 拉所有 `Transfer` 事件（filter `to=address`），
- *      得到候选 tokenId 集合（包括"曾经收到"，但可能已转出）。
- *   3. 对每个候选 tokenId 再用 `ownerOf` 实时校验，过滤掉"已经转出"的。
- *   4. 切钱包后 useEffect 触发重新反查，"切钱包 = 切 Soul 列表"自动闭环。
+ * 设计（v2 —— 合约级真值，不依赖事件历史）：
+ *   1. SoulNFT 没继承 ERC721Enumerable，但有 `totalMinted` view + `balanceOf`。
+ *   2. 拿 `balanceOf(address)` 知道这个钱包有几个 → 0 时直接返回空数组
+ *   3. 拿 `totalMinted` 知道全网 tokenId 范围 [1, totalMinted]
+ *   4. **并行**对所有 tokenId 调 `ownerOf` —— 找到 owner==address 的全部
+ *      为 perf：totalMinted < 50 时 demo 完全可接受（< 1 秒）
+ *   5. 拿到匹配 tokenId 后，并行查 `souls(tokenId)` 拿元数据
+ *
+ * v1 旧设计用 Transfer 事件 + 19000-block 滚动窗口反查。问题：Soul 如果是
+ * 42 小时之前铸的，事件根本扫不到 → 钱包明明有 Soul 但 hook 返回空。
+ * 这是 v1 → v2 的核心修复（用合约状态当真值，不再依赖事件归档）。
  *
  * 这是兑现 Pneuma "钱包即身份" 叙事的关键 UX 抓手——
  * 没有这个 hook，前端要么硬编码 tokenId（破功），要么列全网 Souls（无身份感）。
@@ -15,13 +19,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { parseAbiItem, type Address, type PublicClient } from "viem";
+import { type Address, type PublicClient } from "viem";
 import { usePublicClient } from "wagmi";
 import { SOUL_NFT, SoulNFTAbi } from "./contracts";
-
-const TRANSFER_EVENT = parseAbiItem(
-  "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
-);
 
 export interface SoulSummary {
   tokenId: bigint;
@@ -86,76 +86,52 @@ async function fetchSouls(
   publicClient: PublicClient,
   address: Address,
 ): Promise<SoulSummary[]> {
-  // Step 1: getLogs 拉 Transfer 事件 (to=address) —— 分块拉
-  // Arc Testnet RPC 限制 eth_getLogs 单次最多 10000 blocks，fromBlock=0n 必撞限制。
-  // 跟 useOwnershipTimeline 同口径：从当前块往回 ~19000 blocks（最近 ~42 小时），
-  // 每段 9500 blocks 串行拉。hackathon 期 Soul 都是近期铸的，覆盖足够。
-  const CHUNK_SIZE = 9500n;
-  const HISTORY_BLOCK_RANGE = 19000n;
-  const latest = await publicClient.getBlockNumber();
-  const earliest =
-    latest > HISTORY_BLOCK_RANGE ? latest - HISTORY_BLOCK_RANGE : 0n;
+  // Step 1: balanceOf —— 这个钱包持有几个 Soul（合约级真值，永远准确）
+  const balance = (await publicClient.readContract({
+    address: SOUL_NFT,
+    abi: SoulNFTAbi,
+    functionName: "balanceOf",
+    args: [address],
+  })) as bigint;
 
-  // 用 array-of-arrays + flat 保留 TS 对 event-filtered Log 的类型推断
-  type ChunkType = Awaited<
-    ReturnType<typeof publicClient.getLogs<typeof TRANSFER_EVENT>>
-  >;
-  const chunks: ChunkType[] = [];
-  let cursor = earliest;
-  while (cursor <= latest) {
-    const toBlock =
-      cursor + CHUNK_SIZE > latest ? latest : cursor + CHUNK_SIZE;
-    try {
-      const chunk = await publicClient.getLogs({
-        address: SOUL_NFT,
-        event: TRANSFER_EVENT,
-        args: { to: address },
-        fromBlock: cursor,
-        toBlock,
-      });
-      chunks.push(chunk);
-    } catch (chunkErr) {
-      // 单 chunk 失败不阻塞整体，下一段继续
-      console.warn(
-        `[useMySouls] chunk ${cursor}-${toBlock} failed:`,
-        (chunkErr as Error).message,
-      );
-    }
-    cursor = toBlock + 1n;
-    if (cursor <= latest) await new Promise((r) => setTimeout(r, 100));
-  }
-  const logs = chunks.flat();
+  if (balance === 0n) return [];
 
-  // Step 2: 收集候选 tokenIds 并去重（同一 tokenId 可能多次进入此地址）
-  const candidates = Array.from(
-    new Set(
-      logs
-        .map((l) => l.args.tokenId)
-        .filter((id): id is bigint => typeof id === "bigint"),
-    ),
+  // Step 2: totalMinted —— 全网累计铸造数（决定遍历范围）
+  const totalMinted = (await publicClient.readContract({
+    address: SOUL_NFT,
+    abi: SoulNFTAbi,
+    functionName: "totalMinted",
+  })) as bigint;
+
+  if (totalMinted === 0n) return [];
+
+  // Step 3: 并行查所有 tokenId 的 ownerOf —— 找到属于当前钱包的
+  // perf 评估：demo 阶段 totalMinted < 50；< 1 秒即返回。上规模后再换 indexer。
+  const allTokenIds = Array.from(
+    { length: Number(totalMinted) },
+    (_, i) => BigInt(i + 1),
   );
 
-  if (candidates.length === 0) return [];
+  const targetLower = address.toLowerCase();
 
-  // Step 3: 对每个 tokenId 调 ownerOf + souls() 拿元数据，过滤掉已转出的
   const checked = await Promise.all(
-    candidates.map(async (tokenId) => {
+    allTokenIds.map(async (tokenId) => {
       try {
-        const [owner, soulData] = await Promise.all([
-          publicClient.readContract({
-            address: SOUL_NFT,
-            abi: SoulNFTAbi,
-            functionName: "ownerOf",
-            args: [tokenId],
-          }),
-          publicClient.readContract({
-            address: SOUL_NFT,
-            abi: SoulNFTAbi,
-            functionName: "souls",
-            args: [tokenId],
-          }),
-        ]);
-        if (owner.toLowerCase() !== address.toLowerCase()) return null;
+        const owner = (await publicClient.readContract({
+          address: SOUL_NFT,
+          abi: SoulNFTAbi,
+          functionName: "ownerOf",
+          args: [tokenId],
+        })) as Address;
+        if (owner.toLowerCase() !== targetLower) return null;
+
+        // owner 匹配 —— 再拉元数据
+        const soulData = await publicClient.readContract({
+          address: SOUL_NFT,
+          abi: SoulNFTAbi,
+          functionName: "souls",
+          args: [tokenId],
+        });
         const [agentName, , , tba, createdAt] = soulData;
         return {
           tokenId,
@@ -164,12 +140,12 @@ async function fetchSouls(
           createdAt,
         } satisfies SoulSummary;
       } catch {
+        // tokenId 可能 burn 过 / 不存在 —— ownerOf 会 revert，跳过
         return null;
       }
     }),
   );
 
-  // Step 4: 过滤 + 按 tokenId 升序
   return checked
     .filter((x): x is SoulSummary => x !== null)
     .sort((a, b) => Number(a.tokenId - b.tokenId));
