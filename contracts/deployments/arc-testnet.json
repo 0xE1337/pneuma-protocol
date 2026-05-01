@@ -21,14 +21,15 @@
     "SkillRegistry": "0x4Ab33E9417FCb0D51ef4F9e989057BaD97587a7f",
     "PneumaTimelock": "0x68b8790938C21950506f41Aa071705eC959C6e0B",
     "PneumaCommons": "0x201C873F3f3862e0936b026Fb618Ed06f8aA44Cb",
-    "ReputationGraph": "0x94fE0a0C2427900F9ca82875dF8f672ec2ca3330"
+    "ReputationGraph": "0x94fE0a0C2427900F9ca82875dF8f672ec2ca3330",
+    "PneumaCourt": "0x3371e96b29b5565EF2622A141cDAD3912Daa66AC"
   },
   "external": {
     "ERC6551Registry": "0x000000006551c19487814612e58FE06813775758",
     "Usdc": "0x3600000000000000000000000000000000000000"
   },
-  "pendingDeployment": {
-    "PneumaCourt": "V6.1 sprint — multi-juror dispute, code ready in contracts/src/PneumaCourt.sol but not yet on Arc Testnet"
+  "pendingWiring": {
+    "SkillRegistry.setPneumaCourt": "Currently deployed SkillRegistry is the v6.0 version (no setPneumaCourt fn). Court runs standalone — file/vote/finalize lifecycle works, but slashOnCourtRuling auto-slash will activate only after SkillRegistry is redeployed with v6.1."
   },
   "features": {
     "erc8004IdentityRegistry": true,

@@ -18,6 +18,8 @@ export const PNEUMA_ATTESTATION = process.env.NEXT_PUBLIC_PNEUMA_ATTESTATION_ADD
 export const PNEUMA_COMMONS = process.env.NEXT_PUBLIC_PNEUMA_COMMONS_ADDRESS as Address;
 /** V6.0.2 — 声誉担保图（Endorsement + 连带 slash） */
 export const REPUTATION_GRAPH = process.env.NEXT_PUBLIC_REPUTATION_GRAPH_ADDRESS as Address;
+/** PneumaCourt — multi-juror dispute resolution (file → vote → finalize) */
+export const PNEUMA_COURT = process.env.NEXT_PUBLIC_PNEUMA_COURT_ADDRESS as Address;
 export const ERC6551_REGISTRY = (process.env.NEXT_PUBLIC_ERC6551_REGISTRY ??
   "0x000000006551c19487814612e58FE06813775758") as Address;
 
@@ -791,6 +793,146 @@ export const ReputationGraphAbi = [
       { name: "endorsementId", type: "uint256", indexed: true },
       { name: "endorser", type: "address", indexed: true },
       { name: "amount", type: "uint256", indexed: false },
+    ],
+  },
+] as const;
+
+
+// ──────────────────────────────────────────────────────────────────────
+//  PneumaCourt ABI —— multi-juror dispute (file/vote/finalize)
+// ──────────────────────────────────────────────────────────────────────
+
+/** Verdict 枚举 ↔ 跟 Solidity Verdict { Pending, GuiltyForPlaintiff, InnocentForDefendant } 一一对应 */
+export const VERDICT = {
+  PENDING: 0,
+  GUILTY: 1,
+  INNOCENT: 2,
+} as const;
+
+/** DisputeStatus 枚举 ↔ 跟 Solidity { None, Voting, Resolved } */
+export const DISPUTE_STATUS = {
+  NONE: 0,
+  VOTING: 1,
+  RESOLVED: 2,
+} as const;
+
+const DISPUTE_VIEW_COMPONENTS = [
+  { name: "disputeId", type: "uint256" },
+  { name: "callId", type: "uint256" },
+  { name: "plaintiff", type: "address" },
+  { name: "defendant", type: "address" },
+  { name: "evidenceHash", type: "bytes32" },
+  { name: "description", type: "string" },
+  { name: "jurors", type: "address[]" },
+  { name: "guiltyVotes", type: "uint256" },
+  { name: "innocentVotes", type: "uint256" },
+  { name: "votingDeadline", type: "uint256" },
+  { name: "status", type: "uint8" },
+  { name: "verdict", type: "uint8" },
+] as const;
+
+export const PneumaCourtAbi = [
+  {
+    type: "function",
+    name: "fileDispute",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "callId", type: "uint256" },
+      { name: "evidenceHash", type: "bytes32" },
+      { name: "description", type: "string" },
+      { name: "jurors", type: "address[]" },
+    ],
+    outputs: [{ name: "disputeId", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "vote",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "disputeId", type: "uint256" },
+      { name: "guilty", type: "bool" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "finalize",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "disputeId", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "getDispute",
+    stateMutability: "view",
+    inputs: [{ name: "disputeId", type: "uint256" }],
+    outputs: [{ name: "", type: "tuple", components: DISPUTE_VIEW_COMPONENTS }],
+  },
+  {
+    type: "function",
+    name: "hasVoted",
+    stateMutability: "view",
+    inputs: [
+      { name: "disputeId", type: "uint256" },
+      { name: "juror", type: "address" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "jurorVerdict",
+    stateMutability: "view",
+    inputs: [
+      { name: "disputeId", type: "uint256" },
+      { name: "juror", type: "address" },
+    ],
+    outputs: [{ name: "guilty", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "isCallDisputed",
+    stateMutability: "view",
+    inputs: [{ name: "callId", type: "uint256" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "disputeCount",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "event",
+    name: "DisputeFiled",
+    inputs: [
+      { name: "disputeId", type: "uint256", indexed: true },
+      { name: "callId", type: "uint256", indexed: true },
+      { name: "plaintiff", type: "address", indexed: true },
+      { name: "defendant", type: "address", indexed: false },
+      { name: "evidenceHash", type: "bytes32", indexed: false },
+      { name: "jurors", type: "address[]", indexed: false },
+      { name: "votingDeadline", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "Voted",
+    inputs: [
+      { name: "disputeId", type: "uint256", indexed: true },
+      { name: "juror", type: "address", indexed: true },
+      { name: "guilty", type: "bool", indexed: false },
+      { name: "guiltyVotes", type: "uint256", indexed: false },
+      { name: "innocentVotes", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "DisputeResolved",
+    inputs: [
+      { name: "disputeId", type: "uint256", indexed: true },
+      { name: "verdict", type: "uint8", indexed: false },
+      { name: "callId", type: "uint256", indexed: false },
     ],
   },
 ] as const;

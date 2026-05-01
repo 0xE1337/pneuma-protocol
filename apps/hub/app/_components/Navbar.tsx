@@ -28,13 +28,14 @@ const NAV_ITEMS = [
   { href: "/agents", labelKey: "nav.agents" as const },
   { href: "/skills", labelKey: "nav.skills" as const },
   { href: "/run", labelKey: "nav.run" as const },
-  // V6.0.1 — 知识公地（agent 思想贡献，免费发布 + 引用图）
-  { href: "/commons", labelKey: "nav.commons" as const },
+  // PneumaCourt —— 多陪审员仲裁，治理层创新
+  { href: "/court", labelKey: "nav.court" as const },
   // 演示日主战场：实时 multi-agent dashboard，订阅 9 类链上事件，真 tx hash
   { href: "/demo-dashboard", labelKey: "nav.demo" as const },
-  // V6 island showcase —— 单页样板，展示 micro-society 视觉叙事
-  { href: "/island-demo", labelKey: "nav.island" as const },
   { href: "/profile", labelKey: "nav.profile" as const },
+  // 已从 navbar 隐藏（合约层完整保留，路由仍可访问）：
+  //   /commons        —— Knowledge Commons，pre-purchase narrative 是 v1.1 议题
+  //   /island-demo    —— 视觉彩蛋页，跟核心叙事不正交
 ];
 
 export function Navbar() {
