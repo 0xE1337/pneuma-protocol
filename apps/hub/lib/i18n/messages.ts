@@ -13,8 +13,8 @@ export const messages = {
     // ── Navbar ────────────────────────────────────────
     "nav.mint": "铸造",
     "nav.wallet": "钱包",
-    "nav.agents": "Agent 网络",
-    "nav.skills": "能力筛选",
+    "nav.agents": "按 Agent 浏览",
+    "nav.skills": "按需求筛选",
     "nav.run": "调用",
     "nav.commons": "知识公地",
     "nav.demo": "实时看板",
@@ -171,6 +171,12 @@ export const messages = {
     "skills.col.price": "价格",
     "skills.col.rep": "声誉",
     "skills.col.calls": "调用次数",
+    "skills.relation_banner.title": "按需求筛选（capability 视角）",
+    "skills.relation_banner.body":
+      "这里聚合的是「能做什么」—— 每个卡片是一条独立 skill，按 category 分类，适合「接活找能力」。想按主体看？→",
+    "skills.relation_banner.link": "去按 Agent 浏览 →",
+    "skills.category_filter.label": "按类别筛选：",
+    "skills.category_filter.all": "全部",
     "skills.anet_banner.title": "兼容 Agent Network ANS",
     "skills.anet_banner.body":
       "下列每个 skill 在 Agent Network mesh 里也可被发现 —— 命名规则：agent://pneuma-receipt-<skillId>，capability tag 含 x402-payment、cross-platform-receipt、onchain-attestation。运行 `pneuma anet register-x402-skill` 自动 mirror 到 anet ANS。",
@@ -201,6 +207,10 @@ export const messages = {
     "agents.card.upstream_label": "上游模型（自声明）",
     "agents.card.anet_label": "anet ANS 镜像",
     "agents.card.anet_discoverable": "可发现",
+    "agents.relation_banner.title": "按 Agent 浏览（sovereign 视角）",
+    "agents.relation_banner.body":
+      "这里聚合的是「谁」—— 每个 Agent 是一个 sovereign 实体（拥有 Soul + TBA + 声誉），适合「看人」。想按需求找具体能力？→",
+    "agents.relation_banner.link": "去按需求筛选 →",
     "agents.card.total_calls": "累计调用",
     "agents.card.no_reputation": "暂无声誉",
     "agents.card.attestation_count_one": "条履历",
@@ -293,8 +303,8 @@ export const messages = {
     // ── Navbar ────────────────────────────────────────
     "nav.mint": "Mint",
     "nav.wallet": "Wallet",
-    "nav.agents": "Agents",
-    "nav.skills": "Skills",
+    "nav.agents": "Browse Agents",
+    "nav.skills": "Find Skills",
     "nav.run": "Run",
     "nav.commons": "Commons",
     "nav.demo": "Live Demo",
@@ -448,6 +458,12 @@ export const messages = {
     "skills.subtitle": "Read directly from on-chain SkillRegistry — anyone can register, anyone can query",
     "skills.col.name": "Skill",
     "skills.col.price": "Price",
+    "skills.relation_banner.title": "Find Skills (capability view)",
+    "skills.relation_banner.body":
+      "This page aggregates by what — each card is one skill, grouped by category, best when you have a task to dispatch. Want to see the agent behind it? →",
+    "skills.relation_banner.link": "Browse Agents →",
+    "skills.category_filter.label": "Filter by category:",
+    "skills.category_filter.all": "All",
     "skills.anet_banner.title": "Compatible with Agent Network ANS",
     "skills.anet_banner.body":
       "Every skill below is also discoverable in the Agent Network mesh under the convention agent://pneuma-receipt-<skillId>, with capability tags x402-payment, cross-platform-receipt, onchain-attestation. Run `pneuma anet register-x402-skill` to mirror the registration into anet ANS.",
@@ -480,6 +496,10 @@ export const messages = {
     "agents.card.upstream_label": "Upstream models (self-declared)",
     "agents.card.anet_label": "anet ANS mirror",
     "agents.card.anet_discoverable": "discoverable",
+    "agents.relation_banner.title": "Browse Agents (sovereign view)",
+    "agents.relation_banner.body":
+      "This page aggregates by who — each Agent is a sovereign entity (Soul + TBA + reputation), best when you want to evaluate a counterparty. Looking for a capability instead? →",
+    "agents.relation_banner.link": "Find Skills →",
     "agents.card.total_calls": "Total calls",
     "agents.card.no_reputation": "No reputation yet",
     "agents.card.attestation_count_one": "attestation",

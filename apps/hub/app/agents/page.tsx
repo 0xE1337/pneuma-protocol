@@ -77,6 +77,24 @@ export default function AgentsPage() {
           </p>
         </header>
 
+        {/* 跟 /skills 的关系澄清 banner —— 同一份链上数据的双面镜 */}
+        <div className="rounded-md border border-soul/30 bg-soul/5 px-5 py-4 flex flex-col md:flex-row md:items-start gap-3">
+          <div className="flex-1 space-y-1.5 min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.13em] text-soul-soft font-mono">
+              {t("agents.relation_banner.title")}
+            </div>
+            <p className="text-[12px] text-ink-dim font-mono leading-relaxed">
+              {t("agents.relation_banner.body")}
+            </p>
+          </div>
+          <Link
+            href="/skills"
+            className="text-[11px] font-mono text-cyan hover:text-magenta transition-colors whitespace-nowrap shrink-0"
+          >
+            {t("agents.relation_banner.link")}
+          </Link>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-4">
           <Stat
             label={t("agents.stat.agents")}

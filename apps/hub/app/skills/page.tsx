@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { useReadContract } from "wagmi";
 import { formatUnits, type Address } from "viem";
 import {
@@ -39,6 +41,21 @@ export default function SkillsPage() {
     query: { refetchInterval: 6000 },
   });
 
+  // 类别筛选 —— "全部" 或单选某 category
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  // 链上 skill 自带 category 字段；前端按已存在的 categories 动态生成 chip 列表
+  const categories = useMemo(() => {
+    if (!skills) return [] as string[];
+    return Array.from(new Set(skills.map((s) => s.category))).sort();
+  }, [skills]);
+
+  const filteredSkills = useMemo(() => {
+    if (!skills) return [] as typeof skills;
+    if (!activeCategory) return skills;
+    return skills.filter((s) => s.category === activeCategory);
+  }, [skills, activeCategory]);
+
   return (
     <div className="relative overflow-hidden">
       <div className="neon-streak" data-color="magenta" style={{ top: "200px", left: "8%", width: "84%", height: "5px", transform: "rotate(-7deg)", opacity: 0.35 }} />
@@ -49,6 +66,24 @@ export default function SkillsPage() {
           <h1 className="display text-4xl md:text-5xl">{t("skills.title")}</h1>
           <p className="text-ink-dim leading-relaxed max-w-2xl">{t("skills.subtitle")}</p>
         </header>
+
+        {/* 跟 /agents 的关系澄清 banner —— 同一份链上数据的双面镜 */}
+        <div className="rounded-md border border-soul/30 bg-soul/5 px-5 py-4 flex flex-col md:flex-row md:items-start gap-3">
+          <div className="flex-1 space-y-1.5 min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.13em] text-soul-soft font-mono">
+              {t("skills.relation_banner.title")}
+            </div>
+            <p className="text-[12px] text-ink-dim font-mono leading-relaxed">
+              {t("skills.relation_banner.body")}
+            </p>
+          </div>
+          <Link
+            href="/agents"
+            className="text-[11px] font-mono text-cyan hover:text-magenta transition-colors whitespace-nowrap shrink-0"
+          >
+            {t("skills.relation_banner.link")}
+          </Link>
+        </div>
 
         {/* anet 兼容性 banner —— 解释 skillId ↔ agent:// 的命名约定 */}
         <div className="rounded-md border border-magenta/30 bg-magenta/5 px-5 py-4 flex flex-col md:flex-row md:items-start gap-3">
@@ -79,8 +114,46 @@ export default function SkillsPage() {
 
         {isLoading && <div className="text-ink-faint font-mono">Loading from chain…</div>}
 
+        {/* 类别筛选 chips —— 雇主按需求 narrow */}
+        {categories.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase tracking-[0.13em] text-ink-faint font-mono">
+              {t("skills.category_filter.label")}
+            </span>
+            <button
+              type="button"
+              onClick={() => setActiveCategory(null)}
+              className={`px-3 py-1 rounded-full text-[11px] font-mono transition-colors border ${
+                activeCategory === null
+                  ? "border-cyan/60 bg-cyan/10 text-cyan"
+                  : "border-border bg-bg/40 text-ink-dim hover:border-soul/40"
+              }`}
+            >
+              {t("skills.category_filter.all")} · {skills?.length ?? 0}
+            </button>
+            {categories.map((cat) => {
+              const count = skills?.filter((s) => s.category === cat).length ?? 0;
+              const active = activeCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-3 py-1 rounded-full text-[11px] font-mono transition-colors border ${
+                    active
+                      ? "border-cyan/60 bg-cyan/10 text-cyan"
+                      : "border-border bg-bg/40 text-ink-dim hover:border-soul/40"
+                  }`}
+                >
+                  {cat} · {count}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="grid md:grid-cols-2 gap-5">
-          {skills?.map((s) => {
+          {filteredSkills?.map((s) => {
             const isPerByte = s.inputPricePerKB > 0n || s.outputPricePerKB > 0n;
             const agentUri = `agent://pneuma-receipt-${s.skillId.toString()}`;
             return (
