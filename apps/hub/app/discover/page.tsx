@@ -25,6 +25,7 @@ import {
   SKILL_REGISTRY,
   SkillRegistryAbi,
   USDC_DECIMALS,
+  addressUrl,
 } from "@/lib/contracts";
 import {
   computeReputation,
@@ -394,6 +395,8 @@ function AgentRow({
   skillCount: number;
   totalCalls: bigint;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   const { data: attestations } = useReadContract({
     address: PNEUMA_ATTESTATION,
     abi: PneumaAttestationAbi,
@@ -407,43 +410,198 @@ function AgentRow({
   const boundaryTriggers12mo = countBoundaryTriggers(items);
 
   return (
-    <Link
-      href={`/agents/${owner}`}
-      className="flex items-center gap-3 px-3 py-2 rounded-md border border-border bg-bg/40 hover:border-soul/40 hover:bg-soul/5 transition-colors"
+    <div
+      className={`rounded-md border bg-bg/40 transition-colors ${
+        expanded ? "border-soul/60 bg-soul/5" : "border-border hover:border-soul/40 hover:bg-soul/5"
+      }`}
     >
-      <span className="font-mono text-[11px] text-ink-faint w-6 shrink-0">
-        #{rank}
-      </span>
-      <span className="font-mono text-sm text-ink truncate flex-1 min-w-0">
-        {owner.slice(0, 10)}…{owner.slice(-6)}
-      </span>
-      <ReputationBadge
-        rawTotal={breakdown.score}
-        boundaryTriggers12mo={boundaryTriggers12mo}
-        size="sm"
-      />
-      <span className="text-[10px] font-mono text-ink-faint shrink-0">
-        {skillCount} skill · {totalCalls.toString()} calls
-      </span>
-    </Link>
+      {/* 折叠态：点行任意位置切展开 */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-3 px-3 py-2 text-left"
+        aria-expanded={expanded}
+      >
+        <span className="font-mono text-[11px] text-ink-faint w-6 shrink-0">
+          #{rank}
+        </span>
+        <span className="font-mono text-sm text-ink truncate flex-1 min-w-0">
+          {owner.slice(0, 10)}…{owner.slice(-6)}
+        </span>
+        <ReputationBadge
+          rawTotal={breakdown.score}
+          boundaryTriggers12mo={boundaryTriggers12mo}
+          size="sm"
+        />
+        <span className="text-[10px] font-mono text-ink-faint shrink-0">
+          {skillCount} skill · {totalCalls.toString()} calls
+        </span>
+        <span
+          className={`text-[10px] font-mono text-ink-faint shrink-0 transition-transform ${
+            expanded ? "rotate-180" : ""
+          }`}
+        >
+          ▼
+        </span>
+      </button>
+
+      {/* 展开态：详细信息 + 「查看详情」按钮才跳转 */}
+      {expanded && (
+        <div className="border-t border-border/60 px-4 py-3 space-y-2.5 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+            <Detail
+              label="完整地址"
+              value={
+                <a
+                  href={addressUrl(owner)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan hover:text-magenta break-all underline underline-offset-2"
+                >
+                  {owner} ↗
+                </a>
+              }
+            />
+            <Detail
+              label="ANS 镜像"
+              value={
+                <code className="text-soul-soft">
+                  agent://pneuma-receipt-{owner.slice(2, 8)}
+                </code>
+              }
+            />
+            <Detail
+              label="attestations"
+              value={`${items.length} 条 · 已聚合到声誉公式`}
+            />
+            <Detail
+              label="活跃度"
+              value={`${skillCount} active skill / ${totalCalls.toString()} 累计调用`}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
+            <Link
+              href={`/agents/${owner}`}
+              className="btn-primary text-[12px] px-3 py-1.5"
+            >
+              查看完整履历 →
+            </Link>
+            <span className="text-[10px] text-ink-faint font-mono">
+              · 5 tab：概览 / 技能 / 评价 / 担保 / 法庭
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
 function SkillRow({ rank, skill }: { rank: number; skill: SkillLike }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div className="flex items-center gap-3 px-3 py-2 rounded-md border border-border bg-bg/40 hover:border-cyan/40 hover:bg-cyan/5 transition-colors">
-      <span className="font-mono text-[11px] text-ink-faint w-6 shrink-0">
-        #{rank}
-      </span>
-      <span className="text-sm text-ink truncate flex-1 min-w-0">
-        {skill.name}
-      </span>
-      <span className="text-[11px] font-mono text-soul-soft shrink-0">
-        {formatUnits(skill.pricePerCall, USDC_DECIMALS)} USDC
-      </span>
-      <span className="text-[10px] font-mono text-ink-faint shrink-0">
-        {skill.totalCalls.toString()} calls
-      </span>
+    <div
+      className={`rounded-md border bg-bg/40 transition-colors ${
+        expanded ? "border-cyan/60 bg-cyan/5" : "border-border hover:border-cyan/40 hover:bg-cyan/5"
+      }`}
+    >
+      {/* 折叠态 */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-3 px-3 py-2 text-left"
+        aria-expanded={expanded}
+      >
+        <span className="font-mono text-[11px] text-ink-faint w-6 shrink-0">
+          #{rank}
+        </span>
+        <span className="text-sm text-ink truncate flex-1 min-w-0">
+          {skill.name}
+        </span>
+        <span className="text-[11px] font-mono text-soul-soft shrink-0">
+          {formatUnits(skill.pricePerCall, USDC_DECIMALS)} USDC
+        </span>
+        <span className="text-[10px] font-mono text-ink-faint shrink-0">
+          {skill.totalCalls.toString()} calls
+        </span>
+        <span
+          className={`text-[10px] font-mono text-ink-faint shrink-0 transition-transform ${
+            expanded ? "rotate-180" : ""
+          }`}
+        >
+          ▼
+        </span>
+      </button>
+
+      {/* 展开态：skill 详情 + 「调用此 skill」「看 owner」两个 action */}
+      {expanded && (
+        <div className="border-t border-border/60 px-4 py-3 space-y-2.5 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+            <Detail
+              label="skill ID"
+              value={`#${skill.skillId.toString()} · ${skill.category}`}
+            />
+            <Detail
+              label="owner"
+              value={
+                <a
+                  href={addressUrl(skill.owner)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan hover:text-magenta underline underline-offset-2"
+                >
+                  {skill.owner.slice(0, 10)}…{skill.owner.slice(-6)} ↗
+                </a>
+              }
+            />
+            <Detail
+              label="endpoint"
+              value={
+                <span className="text-ink truncate block">{skill.endpoint}</span>
+              }
+            />
+            <Detail
+              label="ANS 镜像"
+              value={
+                <code className="text-soul-soft">
+                  agent://pneuma-receipt-{skill.skillId.toString()}
+                </code>
+              }
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
+            <Link
+              href={`/run?skillId=${skill.skillId.toString()}`}
+              className="btn-primary text-[12px] px-3 py-1.5"
+            >
+              调用此 skill →
+            </Link>
+            <Link
+              href={`/agents/${skill.owner}`}
+              className="text-[12px] font-mono text-cyan hover:text-magenta underline underline-offset-2"
+            >
+              看 owner 主页 →
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Detail({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-0.5 min-w-0">
+      <div className="text-[9px] uppercase tracking-[0.13em] text-ink-faint">
+        {label}
+      </div>
+      <div className="text-ink truncate">{value}</div>
     </div>
   );
 }

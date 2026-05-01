@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useReadContract } from "wagmi";
 import { formatUnits, isAddress, type Address } from "viem";
 import {
@@ -129,10 +130,10 @@ export default function AgentDetailPage({
             {t("agents.detail.invalid_address")}
           </h1>
           <Link
-            href="/agents"
+            href="/discover"
             className="text-cyan hover:text-magenta transition-colors text-sm font-mono"
           >
-            ← {t("agents.detail.back_to_list")}
+            ← 返回探索页
           </Link>
         </div>
       </div>
@@ -155,13 +156,9 @@ export default function AgentDetailPage({
       />
 
       <div className="relative max-w-5xl mx-auto px-8 pt-12 pb-24 space-y-10 animate-fade-in">
-        {/* Back link */}
-        <Link
-          href="/agents"
-          className="text-[12px] font-mono text-ink-dim hover:text-cyan transition-colors inline-flex items-center gap-1"
-        >
-          ← {t("agents.detail.back_to_list")}
-        </Link>
+        {/* Back —— router.back() 走浏览器历史；从 /discover 进就回 /discover，
+            从 /agents 进就回 /agents；没历史时 fallback 到 /discover */}
+        <BackButton />
 
         {/* Profile header —— 始终显示，是 agent 名片 */}
         <ProfileHeader
@@ -280,6 +277,25 @@ export default function AgentDetailPage({
         {activeTab === "court" && <CourtHistoryTab owner={ownerAddress} />}
       </div>
     </div>
+  );
+}
+
+function BackButton() {
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (typeof window !== "undefined" && window.history.length > 1) {
+          router.back();
+        } else {
+          router.push("/discover");
+        }
+      }}
+      className="text-[12px] font-mono text-ink-dim hover:text-cyan transition-colors inline-flex items-center gap-1"
+    >
+      ← 返回上一页
+    </button>
   );
 }
 
