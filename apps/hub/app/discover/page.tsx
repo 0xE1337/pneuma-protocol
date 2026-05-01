@@ -35,6 +35,7 @@ import { groupSkillsByOwner, type SkillLike } from "@/lib/agents";
 import { ReputationBadge } from "@/app/_components/ReputationBadge";
 import { ReputationFormulaPanel } from "@/app/_components/ReputationFormulaPanel";
 import { countBoundaryTriggers } from "@/lib/boundaryStats";
+import { QUERY_EXAMPLES } from "@/lib/queryExamples";
 
 const TOP_LIMIT = 10;
 
@@ -153,11 +154,7 @@ interface PlanOnlyResponse {
   plan: { steps: PlanStep[]; reasoning: string };
 }
 
-const QUERY_EXAMPLES = [
-  "帮我审计这个 0x... 合约的安全风险",
-  "查我钱包近 90 天有没有被薅羊毛",
-  "分析最近 30 天 ETH 价格 + 给一段总结",
-];
+// (QUERY_EXAMPLES 抽到 lib/queryExamples.ts，import 在文件顶部)
 
 /**
  * SearchBox —— Discover 真智能搜索
@@ -241,16 +238,17 @@ function SearchBox() {
 
       {/* 示例点击 → 自动填入输入框 */}
       {!resp && !busy && (
-        <div className="flex items-baseline gap-2 flex-wrap text-[11px] font-mono">
+        <div className="flex items-center gap-2 flex-wrap text-[12px] font-mono">
           <span className="text-ink-faint">试试：</span>
           {QUERY_EXAMPLES.map((ex) => (
             <button
-              key={ex}
+              key={ex.label}
               type="button"
-              onClick={() => setInput(ex)}
-              className="text-cyan hover:text-magenta underline underline-offset-2"
+              onClick={() => setInput(ex.query)}
+              title={ex.hint}
+              className="px-2.5 py-1 rounded-full border border-cyan/30 bg-cyan/5 text-cyan hover:bg-cyan/15 hover:border-cyan/60 transition-colors"
             >
-              {ex}
+              {ex.label}
             </button>
           ))}
         </div>

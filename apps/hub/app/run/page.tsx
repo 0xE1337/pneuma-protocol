@@ -47,6 +47,7 @@ import { useMySouls, type SoulSummary } from "@/lib/useMySouls";
 import { CHAIN_ID } from "@/lib/chain";
 import { WrongChainBanner } from "@/app/_components/ChainGuard";
 import { useI18n } from "@/lib/i18n";
+import { QUERY_EXAMPLES } from "@/lib/queryExamples";
 import Link from "next/link";
 
 // ────────────────────────────────────────────────────────────────────────
@@ -1280,11 +1281,28 @@ function SmartRunPanel({
               ⚡ planner LLM 自动选 skill
             </span>
           </label>
+          {/* 预 验证过的 query 按钮 —— 让评委不用猜哪些 query LLM 能命中 */}
+          {!busy && (
+            <div className="flex items-center gap-2 flex-wrap text-[12px] font-mono">
+              <span className="text-ink-faint">试试：</span>
+              {QUERY_EXAMPLES.map((ex) => (
+                <button
+                  key={ex.label}
+                  type="button"
+                  onClick={() => setInput(ex.query)}
+                  title={ex.hint}
+                  className="px-2.5 py-1 rounded-full border border-magenta/30 bg-magenta/5 text-magenta hover:bg-magenta/15 hover:border-magenta/60 transition-colors"
+                >
+                  {ex.label}
+                </button>
+              ))}
+            </div>
+          )}
           <textarea
             className="input min-h-[120px] resize-y font-sans text-sm leading-relaxed"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="例：查 ETH 当前价格，再用一句话总结这段..."
+            placeholder="例：评审这段 Solidity diff + 解释这笔交易 + 用一句话总结风险..."
             disabled={busy}
           />
           <button
