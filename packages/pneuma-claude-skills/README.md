@@ -19,7 +19,32 @@
 
 ---
 
-## 5 分钟跑起来
+## 公网部署模式（演示日推荐 · 详见 [SETUP_TUNNEL.md](./SETUP_TUNNEL.md)）
+
+```bash
+# 0. 装 cloudflared + 登录（一次性，5 min）
+brew install cloudflared
+cloudflared tunnel login
+cloudflared tunnel create pneuma-skills      # 拿到 Tunnel UUID
+
+# 1. 配 ~/.cloudflared/config.yml（基于 config/cloudflared.yml.example）
+#    填 Tunnel UUID + hostname
+
+# 2. 启 tunnel（前台，演示期保持开）
+cloudflared tunnel run pneuma-skills
+
+# 3. 起 5 个 skill server（另一个 terminal）
+pnpm start:all
+
+# 4. 重注册 5 skill 到公网 URL（自动验 endpoint 通后才上链）
+PUBLIC_BASE_URL=https://<UUID>.cfargotunnel.com pnpm register:tunnel
+```
+
+链上 endpoint 现在是 `https://<UUID>.cfargotunnel.com/<skill-id>/api/run`——评委用 explorer 看可信。
+
+---
+
+## 本地 dev 模式（不走公网）
 
 ```bash
 # 0. 前置确认 —— 你电脑上的 Claude Code 已登录（订阅版 OAuth）

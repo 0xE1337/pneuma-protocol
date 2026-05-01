@@ -10,6 +10,7 @@
     "start:all": "node script/start-all.mjs",
     "build": "tsc",
     "register": "tsx script/register-all.ts",
+    "register:tunnel": "tsx script/register-tunnel.ts",
     "seed-traffic": "tsx script/seed-traffic.ts",
     "smoke": "tsx script/smoke.ts"
   },

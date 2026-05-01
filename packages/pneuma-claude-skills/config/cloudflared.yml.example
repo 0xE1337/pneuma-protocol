@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────
+#  Cloudflare Tunnel ingress 配置模板
+# ─────────────────────────────────────────────────────────────────
+#
+# 用法：
+#
+#   1. 生成 tunnel：
+#        cloudflared tunnel login            # 浏览器 OAuth
+#        cloudflared tunnel create pneuma-skills
+#        # → 输出 Tunnel UUID（形如 12345678-abcd-ef01-2345-6789abcdef01）
+#
+#   2. 把这份文件 cp 到 ~/.cloudflared/config.yml，然后：
+#        - 把下面 <YOUR_TUNNEL_UUID> 替换为你的 Tunnel UUID
+#        - 把 <YOUR_DOMAIN> 替换为：
+#            · 如果你有自己的 Cloudflare 域名 → skills.your-domain.com
+#            · 如果没有 → <UUID>.cfargotunnel.com（Cloudflare 永久免费分配）
+#
+#   3. 起 tunnel：
+#        cloudflared tunnel run pneuma-skills
+#        # ↑ 这条命令在前台跑；演示期保持窗口开着，关了 tunnel 就断
+#
+#   4. 重注册 5 个 skill 用新公网 URL：
+#        PUBLIC_BASE_URL=https://<YOUR_DOMAIN> pnpm register
+#        # 把 stdout 5 行 SKILL_ID_*=N 复制粘到 .env（覆盖旧 localhost 版）
+#
+#   5. 重启 5 个 skill server 让 .env 生效：
+#        pkill -f "pneuma-claude-skills" && pnpm start:all
+#
+# ─────────────────────────────────────────────────────────────────
+
+tunnel: <YOUR_TUNNEL_UUID>
+credentials-file: /Users/yijingguo/.cloudflared/<YOUR_TUNNEL_UUID>.json
+
+# Path-based 路由：同一 host 的不同 path 映射到不同本地端口
+# 这样链上注册的 endpoint 是 https://<host>/<skill-id>/api/run
+# tunnel 自动剥掉前缀 /<skill-id>/，转发到对应端口
+ingress:
+  # ── Paper Summary :3101 ──
+  - hostname: <YOUR_DOMAIN>
+    path: /paper-summary/.*
+    service: http://localhost:3101
+
+  # ── Code Review :3102 ──
+  - hostname: <YOUR_DOMAIN>
+    path: /code-review/.*
+    service: http://localhost:3102
+
+  # ── Block Explainer :3103 ──
+  - hostname: <YOUR_DOMAIN>
+    path: /block-explainer/.*
+    service: http://localhost:3103
+
+  # ── Creative Write :3104 ──
+  - hostname: <YOUR_DOMAIN>
+    path: /creative-write/.*
+    service: http://localhost:3104
+
+  # ── Quick Reasoning :3105 ──
+  - hostname: <YOUR_DOMAIN>
+    path: /quick-reasoning/.*
+    service: http://localhost:3105
+
+  # 兜底：任何其它路径 → 404
+  - service: http_status:404

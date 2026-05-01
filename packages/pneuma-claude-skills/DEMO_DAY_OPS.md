@@ -42,40 +42,22 @@ PUBLIC_BASE_URL=https://skills.pneuma.dev pnpm register
 
 ### 2. Cloudflare Tunnel 配置好
 
+详细一步一步指南：[SETUP_TUNNEL.md](./SETUP_TUNNEL.md)
+
+最快路径（不需要自己域名，用 Cloudflare 永久免费 `*.cfargotunnel.com` 子域）：
+
 ```bash
-# 安装 cloudflared
+# 一次性安装 + OAuth + 创建 tunnel
 brew install cloudflared
+cloudflared tunnel login                    # 浏览器一次
+cloudflared tunnel create pneuma-skills     # 拿到 Tunnel UUID
 
-# 登录 + 创建 tunnel（一次性）
-cloudflared tunnel login
-cloudflared tunnel create pneuma-skills
-
-# config.yml 在 ~/.cloudflared/config.yml：
-cat << 'EOF' > ~/.cloudflared/config.yml
-tunnel: pneuma-skills
-credentials-file: /Users/yijingguo/.cloudflared/<UUID>.json
-
-ingress:
-  - hostname: skills.pneuma.dev
-    path: /paper-summary/.*
-    service: http://localhost:3101
-  - hostname: skills.pneuma.dev
-    path: /code-review/.*
-    service: http://localhost:3102
-  - hostname: skills.pneuma.dev
-    path: /block-explainer/.*
-    service: http://localhost:3103
-  - hostname: skills.pneuma.dev
-    path: /creative-write/.*
-    service: http://localhost:3104
-  - hostname: skills.pneuma.dev
-    path: /quick-reasoning/.*
-    service: http://localhost:3105
-  - service: http_status:404
-EOF
-
-# 路由 DNS（如果你域名在 Cloudflare）
-cloudflared tunnel route dns pneuma-skills skills.pneuma.dev
+# 配置 ingress（基于 config/cloudflared.yml.example，替换 UUID + hostname）
+cp config/cloudflared.yml.example ~/.cloudflared/config.yml
+# 编辑 ~/.cloudflared/config.yml：
+#   - tunnel: <UUID>
+#   - credentials-file: /Users/yijingguo/.cloudflared/<UUID>.json
+#   - 5 个 hostname: <UUID>.cfargotunnel.com
 ```
 
 ### 3. seed 历史数据 → 链上有真历史
