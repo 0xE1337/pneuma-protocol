@@ -4,6 +4,15 @@ const config: NextConfig = {
   reactStrictMode: true,
   // 让 Pneuma workspace 的 packages 在 dev/build 时被 transpile（避免 ESM 边界问题）
   transpilePackages: ["@pneuma/x402", "@pneuma/orchestrator", "@pneuma/reputation-formula"],
+  // 把 Vercel 自动注入的 commit short SHA 暴露给客户端，让 dashboard 顶部
+  // 显示 build 版本号——用户一眼看出浏览器 chunk 是不是最新代码
+  // (修了好几轮 chainTimestamp，但用户浏览器一直缓存旧 bundle 看不到效果)
+  env: {
+    NEXT_PUBLIC_BUILD_STAMP:
+      process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+      process.env.NEXT_PUBLIC_BUILD_STAMP ??
+      "dev",
+  },
   // env 变量从根 .env.local 注入，前缀 NEXT_PUBLIC_* 自动暴露给浏览器
   // 服务器端读取的私钥等不会泄露
   webpack: (webpackConfig) => {

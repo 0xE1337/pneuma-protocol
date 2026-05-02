@@ -131,10 +131,20 @@ function DashboardInner() {
 
 /* ─────────────────────────────────────────────────────────────────────── */
 
+// 编译时 inline 构建时间戳，让浏览器一眼看出 chunk 是不是最新代码——
+// 之前修了好几轮但用户浏览器一直缓存旧 bundle，没显示真链上时间。
+// 这条一定要走构建时常量替换（Next.js 自动 inline NEXT_PUBLIC_*）才能 per-deploy 变。
+const BUILD_STAMP = process.env.NEXT_PUBLIC_BUILD_STAMP ?? "dev";
+
 function Header() {
   return (
     <header className="space-y-2">
-      <span className="pill-live">DEMO DASHBOARD · LIVE ON ARC TESTNET</span>
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <span className="pill-live">DEMO DASHBOARD · LIVE ON ARC TESTNET</span>
+        <span className="text-[9px] font-mono text-ink-faint uppercase tracking-wider">
+          build {BUILD_STAMP}
+        </span>
+      </div>
       <h1 className="display text-3xl md:text-4xl">Agent 互调网络 · 真链上事件</h1>
       <p className="text-ink-dim text-[14px] leading-relaxed max-w-3xl">
         所有数据来自 Arc Testnet 链上事件订阅（chain id 5042002）——
