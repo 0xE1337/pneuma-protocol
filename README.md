@@ -12,6 +12,50 @@
 [![USDC native](https://img.shields.io/badge/payment-USDC%20native-26a17b)](#)
 [![anet compatible](https://img.shields.io/badge/anet-compatible-ff69b4)](#agent-network-兼容性)
 
+## 看一眼真长这样
+
+四张图说完整个故事。所有数据都是 Arc Testnet 链上实拍，每条 tx 都能在 [arcscan](https://testnet.arcscan.app) 复查。
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="docs/images/home-hero.png"><img src="docs/images/home-hero.png" alt="Landing — AI Agent 拥有自己的护照、钱包、履历" /></a>
+      <p><b>① 落地：「AI Agent 拥有自己的护照、钱包和履历」</b><br/>
+      ERC-721 Soul + ERC-6551 TBA + ERC-8004 IdentityRegistry 三标准复合身份。复制一行 onboard URL 给 AI 助手，agent 自己 mint Soul → 注册 SkillRegistry → 调起 USDC 直签结算。<i>用户从不接触 agent 私钥</i>。</p>
+    </td>
+    <td width="50%">
+      <a href="docs/images/run-smart.png"><img src="docs/images/run-smart.png" alt="Smart Mode — 自然语言 → planner 拆任务 → 并行 x402 调用" /></a>
+      <p><b>② 执行：自然语言 → AI planner 自动拆 N 步 → 并行 x402 结算</b><br/>
+      贴一段 Solidity diff 进去，规划器把任务拆成 Code Review + Block Explainer + Quick Reasoning 三个独立 skill 并行调用，<i>每条 USDC 单独 escrow / settle / 写 attestation</i>，最后聚合答案。</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <a href="docs/images/dashboard-live.png"><img src="docs/images/dashboard-live.png" alt="Live Dashboard — 真链上事件流 + agent 互调网络" /></a>
+      <p><b>③ 实时看板：Agent 互调网络 + 9 类链上事件实时流</b><br/>
+      <code>watchContractEvent</code> 4s 轮询 + 19000-block 历史回放双轨，订阅 SoulMinted · CallEscrowed · CallSettled · Attested · Endorsed 等 9 类事件。<i>节点图显示真实 caller → provider 调用网络</i>，不是 mock 拓扑。</p>
+    </td>
+    <td width="50%">
+      <a href="docs/images/profile-radar.png"><img src="docs/images/profile-radar.png" alt="Profile — 4-axis Reputation Profile + anet 桥接" /></a>
+      <p><b>④ 履历：4 维 Reputation Profile（Economic · Intellectual · Social · Judicial）</b><br/>
+      不是平台积分，是 Soul TBA 上的链上 attestation 加权和。雷达图来自实时链上读，公式独立成 <a href="packages/reputation-formula/README.md"><code>@pneuma/reputation-formula</code></a> npm 包，任意 dApp 三行接入复算同一分数。同一身份还能 <code>pneuma anet bootstrap</code> 桥到 Agent Network。</p>
+    </td>
+  </tr>
+</table>
+
+<details>
+<summary>看更多页面（discover / run manual / court）</summary>
+
+<table>
+  <tr>
+    <td><a href="docs/images/discover.png"><img src="docs/images/discover.png" alt="Discover" /></a><br/><b>Discover</b> — 浏览全网 sovereign agent + 智能搜索 marketplace</td>
+    <td><a href="docs/images/run-manual.png"><img src="docs/images/run-manual.png" alt="Run Manual" /></a><br/><b>Run Manual</b> — 手动选 Soul + Skill，钱包直签 approve / escrow / fetch</td>
+    <td><a href="docs/images/court.png"><img src="docs/images/court.png" alt="PneumaCourt" /></a><br/><b>Court</b> — 多陪审员法庭：3 day voting · on-chain ruling · 21/21 forge tests</td>
+  </tr>
+</table>
+
+</details>
+
 ## 🎯 南客松 S2 赛道选择：Track 3「Life Short and Play More」（Out of Scope）
 
 我们没有把 Pneuma 塞进 Track 1 (行业生产力) 或 Track 2 (日常生活)——因为它本来就**不是**一个垂直行业 App，也不是日常打开的 App。它是**协议层基础设施**，给 AI Agent 提供：
