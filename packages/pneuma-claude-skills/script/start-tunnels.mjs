@@ -41,7 +41,16 @@ const RESET = "\x1b[0m";
 const tunnelUrls = {};
 
 // trycloudflare.com URL 在 stdout 里出现的模式
-const URL_REGEX = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/i;
+//
+// 关键修复 (2026-05-02)：原来 /https:\/\/[a-z0-9-]+\.trycloudflare\.com/ 太宽松，
+// 把 cloudflared 错误日志里的 `Post "https://api.trycloudflare.com/tunnel": EOF`
+// 也匹配上 (api 也是 [a-z0-9-]+)，并发起 tunnel 限流时 4/5 失败但 4/5 都把
+// `https://api.trycloudflare.com` 当成自己的 tunnel URL 写进 .tunnels.json。
+// 后续 register 5/5 命中废 URL，全部上链废 listing。
+//
+// 修法：排除 `api.trycloudflare.com` 这个已知的 false positive。真 quick tunnel
+// 的 URL 形如 `https://<adj>-<noun>-<verb>-<noun>.trycloudflare.com`。
+const URL_REGEX = /https:\/\/(?!api\.)[a-z0-9-]+\.trycloudflare\.com/i;
 
 function startTunnel(skill) {
   const tag = `${skill.color}[${skill.id}]${RESET}`;
@@ -96,10 +105,13 @@ function startTunnel(skill) {
 
 console.log("\n🌐 起 5 条 cloudflared quick tunnel（无需登录）");
 console.log("   每个 skill 一条独立 https://*.trycloudflare.com URL");
-console.log("   抓齐后自动写 .tunnels.json，再跑 pnpm register:tunnels\n");
+console.log("   抓齐后自动写 .tunnels.json，再跑 pnpm register:tunnels");
+console.log("   ⚠ 串行间隔 4s 启动 —— 避免并发触发 trycloudflare API 限流 (EOF)\n");
 
-for (const skill of SKILLS) {
-  startTunnel(skill);
+// 串行间隔启动：cloudflared quick tunnel 走 https://api.trycloudflare.com/tunnel
+// POST 申请，5 个并发请求会触发限流，4/5 返回 EOF。间隔 4s 让限流窗口过去。
+for (const [i, skill] of SKILLS.entries()) {
+  setTimeout(() => startTunnel(skill), i * 4000);
 }
 
 process.on("SIGINT", () => {
