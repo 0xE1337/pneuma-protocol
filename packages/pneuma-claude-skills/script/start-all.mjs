@@ -6,6 +6,7 @@
  *   - 自己的 PID
  *   - 自己的端口
  *   - 自己的 stdout 前缀（彩色，方便区分）
+ *   - 自己的 owner private key（Sovereign agent 视角：每 skill 用真 owner 签 settle）
  *
  * 任一进程挂了，supervisor 自动重启（最多 5 次，超过就放弃报错）。
  *
@@ -16,12 +17,25 @@
  *   pnpm start:all
  */
 
+import { config as loadEnv } from "dotenv";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
+
+// 加载 .env 拿 owner private keys
+loadEnv({ path: resolve(repoRoot, ".env") });
+
+// Skill → owner agent 名（必须跟 register-multi-agent.ts OWNER_OF 对齐）
+const OWNER_OF = {
+  "paper-summary": "RESEARCH_BOT",
+  "creative-write": "RESEARCH_BOT",
+  "quick-reasoning": "RESEARCH_BOT",
+  "code-review": "WEB3_AUDITOR",
+  "block-explainer": "WEB3_AUDITOR",
+};
 
 const SKILLS = [
   { id: "paper-summary", port: 3101, color: "\x1b[36m" }, // cyan
@@ -39,12 +53,19 @@ function startSkill(skill) {
 
   function spawnIt() {
     const tag = `${skill.color}[${skill.id}:${skill.port}]${RESET}`;
+
+    // 注入 SKILL_OWNER_KEY_<UPPER> = 对应 agent 的 EOA_*_PRIVATE_KEY
+    const ownerName = OWNER_OF[skill.id]; // RESEARCH_BOT 或 WEB3_AUDITOR
+    const ownerKey = ownerName ? process.env[`EOA_${ownerName}_PRIVATE_KEY`] : undefined;
+    const ownerKeyEnvVar = `SKILL_OWNER_KEY_${skill.id.replace(/-/g, "_").toUpperCase()}`;
+
     const child = spawn("npx", ["tsx", "src/server.ts"], {
       cwd: repoRoot,
       env: {
         ...process.env,
         SKILL_ID: skill.id,
         PORT_OVERRIDE: String(skill.port),
+        ...(ownerKey ? { [ownerKeyEnvVar]: ownerKey } : {}),
       },
       stdio: ["ignore", "pipe", "pipe"],
     });

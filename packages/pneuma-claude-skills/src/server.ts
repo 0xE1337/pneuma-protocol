@@ -75,7 +75,16 @@ const PORT = Number(
 
 const PAYMENT_TOKEN = process.env.NEXT_PUBLIC_USDC_ADDRESS as Address;
 const SKILL_REGISTRY = process.env.NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS as Address;
-const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY as Hex;
+
+// x402 middleware 的 settle 用 skill owner 的私钥（不是 deployer）
+// 优先级：SKILL_OWNER_KEY_<UPPER>（多 sovereign agent 模式）→ DEPLOYER_PRIVATE_KEY（fallback）
+// 必须用 owner key 因为 settle 时合约 transfer USDC 给 skill.owner，
+// 不是 owner 的钱包签的 settle 会触发 NotSkillOwner 或 settle 路径异常
+const OWNER_KEY_ENV = `SKILL_OWNER_KEY_${definition.id
+  .replace(/-/g, "_")
+  .toUpperCase()}`;
+const PRIVATE_KEY = (process.env[OWNER_KEY_ENV] ??
+  process.env.DEPLOYER_PRIVATE_KEY) as Hex;
 const RPC_URL = process.env.ARC_TESTNET_RPC_URL!;
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 5042002);
 
@@ -97,6 +106,23 @@ if (!PRIVATE_KEY) {
 
 type AppVariables = { pneumaCallId: string };
 const app = new Hono<{ Variables: AppVariables }>();
+
+// 全局 error handler —— 把 unhandled error stack 打到 stderr 方便 debug
+// Hono 默认会返回 500 但 swallow 错误，导致 settle 阶段 revert 看不到原因
+app.onError((err, c) => {
+  console.error(`\n[${definition.name}] ❌ unhandled error:`);
+  console.error((err as Error).stack ?? err);
+  return c.json(
+    {
+      service: definition.name,
+      error: (err as Error).message,
+      stack: process.env.NODE_ENV === "production"
+        ? undefined
+        : (err as Error).stack?.split("\n").slice(0, 8),
+    },
+    500,
+  );
+});
 
 app.use(
   "*",
@@ -172,12 +198,19 @@ app.post(
 // Boot
 // ────────────────────────────────────────────────────────────────────────
 
+// 显示 owner addr —— sovereign agent 视觉证据
+import { privateKeyToAccount } from "viem/accounts";
+const ownerAddress = privateKeyToAccount(PRIVATE_KEY).address;
+const ownerSource = process.env[OWNER_KEY_ENV] ? OWNER_KEY_ENV : "DEPLOYER (fallback)";
+
 console.log(`╭───────────────────────────────────────────────────`);
 console.log(`│ [${definition.name}] (${definition.id})`);
 console.log(`│   skillId       ${ON_CHAIN_SKILL_ID}`);
 console.log(`│   port          ${PORT}`);
 console.log(`│   pricePerCall  ${Number(definition.pricePerCall) / 1e6} USDC`);
 console.log(`│   category      ${definition.category}`);
+console.log(`│   owner         ${ownerAddress}`);
+console.log(`│   key source    ${ownerSource}`);
 console.log(`│   reasoning     local claude CLI (零 API key, 走订阅)`);
 console.log(`╰───────────────────────────────────────────────────`);
 

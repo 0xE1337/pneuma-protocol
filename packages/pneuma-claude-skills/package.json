@@ -14,6 +14,8 @@
     "tunnels:up": "node script/start-tunnels.mjs",
     "register:tunnels": "tsx script/register-tunnels.ts",
     "deactivate:old": "tsx script/deactivate-old.ts",
+    "setup:multi-agent": "tsx script/setup-multi-agent.ts",
+    "register:multi-agent": "tsx script/register-multi-agent.ts",
     "seed-traffic": "tsx script/seed-traffic.ts",
     "smoke": "tsx script/smoke.ts"
   },
