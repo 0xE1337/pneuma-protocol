@@ -44,8 +44,16 @@
 /* light theme block 已于 2026-04-30 移除 —— 二态切换 island ↔ dark */
 
 [data-theme="island"] {
-  /* Island palette — Animal-Crossing-inspired warm parchment + mint accent
-     色板严格对齐 animal-island-ui DESIGN_PROMPT.md（颗粒度到像素） */
+  /* Island palette — Animal-Crossing-inspired warm parchment + 三色 accent
+     色板严格对齐 animal-island-ui DESIGN_PROMPT.md（颗粒度到像素）
+
+     设计哲学（V6.2 token sweep）：之前 magenta/cyan 都被映射到同一个 mint，
+     导致 page.tsx 里"四套标准"三色 pillar / ProtocolFlow 六步色阶塌成单色。
+     现在拓到森友会三色 accent：
+       - soul    = mint teal #19c8b9 → 主 CTA / live status
+       - magenta = warm peach #e88c4a → 次要 accent / warn / call-out
+       - cyan    = forest green #6fba2c → 三级 accent / standards label / success ✓
+     三色彼此色相距离够远，page.tsx / hero 不需要任何改动，色彩层次自动恢复 */
   --color-bg: 248 248 240;        /* #f8f8f0 warm parchment */
   --color-elevated: 247 243 223;  /* card / modal — slightly warmer */
   --color-border: 196 184 158;    /* #c4b89e */
@@ -54,8 +62,8 @@
   --color-ink-faint: 159 146 125; /* #9f927d secondary */
   --color-soul: 25 200 185;       /* #19c8b9 mint teal — island primary accent */
   --color-soul-soft: 61 212 198;  /* #3dd4c6 mint hover */
-  --color-magenta: 224 90 90;     /* #e05a5a status error/danger */
-  --color-cyan: 25 200 185;       /* 与 soul 同 mint，让 cyan utility 也吃 mint */
+  --color-magenta: 232 140 74;    /* #e88c4a 暖橙 peach — 替代 cyber violet 的次 accent */
+  --color-cyan: 111 186 44;       /* #6fba2c forest green — success / standards label / "✓" */
   --color-grain-base: 121 79 39;  /* warm brown grain on parchment */
   --color-edge: 248 248 240;
 
@@ -540,10 +548,17 @@
    *   - cinematic neon → softer Animal-Crossing palette
    * ════════════════════════════════════════════════════════════════════ */
 
-  /* Hero / section bg neon streaks 在 island 下完全隐藏 —— 不和谐 */
+  /* Hero / section bg neon streaks 在 island 下软化为 mint/peach/green 暖光晕
+     原 cyber violet 完全不和谐（display:none 又让 hero 失去氛围层）→
+     映射到森友会三色：violet→mint / magenta→peach / cyan→forest green，
+     opacity 从 0.45 砍到 0.18 + blur 加大到 64px，呈"晨雾感"而不是"霓虹灯" */
   [data-theme="island"] .neon-streak {
-    display: none;
+    opacity: 0.18;
+    filter: blur(64px);
   }
+  [data-theme="island"] .neon-streak[data-color="violet"]  { background: rgb(var(--color-soul)); }
+  [data-theme="island"] .neon-streak[data-color="magenta"] { background: rgb(var(--color-magenta)); }
+  [data-theme="island"] .neon-streak[data-color="cyan"]    { background: rgb(var(--color-cyan)); }
 
   /* Surface 卡片 island 化：20px 圆角 + 米色卡 + 4px shadow + hover 上浮 4px
      按 DESIGN_PROMPT.md "Card hover: translateY(-4px) — gentle float" */
@@ -576,15 +591,15 @@
     box-shadow: 0 12px 32px rgba(25, 200, 185, 0.25);
   }
 
-  /* surface-gradient island 版：从 violet→magenta 改成 mint→peach 暖色 gradient */
+  /* surface-gradient island 版：mint → peach 暖色 gradient（peach 现在是 token --color-magenta） */
   [data-theme="island"] .surface-gradient {
     border-radius: 20px;
     border: 2px solid rgb(var(--color-soul) / 0.35);
     background: linear-gradient(
       135deg,
-      rgba(25, 200, 185, 0.08) 0%,
+      rgb(var(--color-soul) / 0.08) 0%,
       rgb(var(--color-elevated)) 50%,
-      rgba(225, 140, 111, 0.10) 100%
+      rgb(var(--color-magenta) / 0.10) 100%
     );
     box-shadow: 0 8px 20px rgba(107, 92, 67, 0.15);
   }
@@ -678,17 +693,10 @@
     line-height: 1.15;
   }
 
-  /* text-magenta / text-cyan 在 island 下重定义为 mint accent
-     这俩 utility class 在 page.tsx 里大量用作 "section eyebrow" 的强调色 */
-  [data-theme="island"] .text-magenta {
-    color: rgb(var(--color-soul));
-  }
-  [data-theme="island"] .text-cyan {
-    color: rgb(var(--color-soul));
-  }
-  [data-theme="island"] .text-soul-soft {
-    color: rgb(var(--color-soul-soft));
-  }
+  /* text-magenta / text-cyan / text-soul-soft 不再 override：
+     V6.2 起 magenta/cyan token 在 island palette 已经是 peach #e88c4a / forest #6fba2c，
+     彼此色相距离够远 → tailwind utility 自动响应，page.tsx 三色 pillar 层次自然恢复。
+     如果想让某个特定页面的 magenta 走 mint，请在该页面用 .text-soul，不要在这里全局改写。 */
 
   /* label —— 小 eyebrow 文字，island 下保留 uppercase 但用 brown ink */
   [data-theme="island"] .label {

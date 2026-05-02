@@ -35,8 +35,11 @@ const config: Config = {
         sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        glow: "0 16px 48px -12px rgb(88 44 255 / 0.5)",
-        glowBig: "0 24px 80px -8px rgb(88 44 255 / 0.45)",
+        // V6.2: shadow 颜色不再硬编码 cyber violet（rgb(88 44 255)），改走 token
+        // → island 主题下自动变成 mint warm shadow，dark 主题保留 violet glow
+        // card 阴影在 island 下也偏暖（warm brown 0.18），dark 下仍是黑 0.7
+        glow: "0 16px 48px -12px rgb(var(--color-soul) / 0.5)",
+        glowBig: "0 24px 80px -8px rgb(var(--color-soul) / 0.45)",
         card: "0 12px 24px -8px rgb(0 0 0 / 0.7)",
       },
       keyframes: {
