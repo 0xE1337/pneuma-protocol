@@ -780,10 +780,9 @@ Pneuma 协议层每一块都基于公开以太坊标准 + 经过审计的库（O
 
 按"先做实链上经济基础设施，再做仲裁治理"的顺序：
 
-### Phase 1 · DAO 治理
-- 替换当前单点 `GOVERNOR_ROLE` 为通过 `PneumaTimelock` + OpenZeppelin Governor
-- 发独立的 ERC20Votes 治理代币（与支付层 USDC 解耦：governance ≠ payment medium）
-- 提案 / 投票 / 队列 / 执行的完整生命周期
+### Phase 1 · DAO 治理（框架部分已交付）
+- **已交付**：[`PneumaTimelock`](contracts/src/PneumaTimelock.sol) 合约部署到 Arc Testnet（`0x68b8...6e0B`），OpenZeppelin Governor 兼容的 queue / execute / cancel 包装层 + 2-day 强制延迟，当前 guardian = deployer 单点 mode
+- **待做**：接 OpenZeppelin Governor + 发独立 ERC20Votes 治理代币（与 USDC 解耦：governance ≠ payment medium）+ 完整提案 / 投票 / 队列 / 执行生命周期
 - 引用：[OpenZeppelin Governor 文档](https://docs.openzeppelin.com/contracts/5.x/governance)
 
 ### Phase 2 · Commit-Reveal 投票
@@ -791,10 +790,16 @@ Pneuma 协议层每一块都基于公开以太坊标准 + 经过审计的库（O
 - 防 vote-buying（jurors 在 reveal 前没人能验证投票）
 - 引用：Kleros v2 commit-reveal 设计
 
-### Phase 3 · Sortition + 陪审制
-- **当前 v1（已交付）**：provider self-stake + SLA-timeout 任意第三方触发 slash + revoke 联动 slash（`SkillRegistry.claimTimeoutAndSlash` / `slashOnRevoke`）
-- **v2 升级**：争议 attestation 进入 jury panel，VRF 选 N 个持治理代币的 jurors（principal-aware exclusion 排除关联方）
-- Bond + Slash：错误投票方被罚没，受害方从 carepool 补偿
+### Phase 3 · Court v2 升级（v1 多陪审员法庭已交付）
+- **已交付（v1）**：
+  - [`PneumaCourt`](contracts/src/PneumaCourt.sol) 多陪审员投票合约部署到 Arc Testnet（`0x3371...66AC`），21/21 forge tests，3 day voting · 多数决 · 平票保护被告
+  - `fileDispute` + `vote(disputeId, bool guilty)` + finalize 完整生命周期
+  - 推荐 jurors：[`/court/new`](apps/hub/app/court/new/page.tsx) 按 `ReputationGraph.totalActiveStakeTo` 担保权重排序自动给到 5 位人选 + 剔除 plaintiff/defendant
+  - SLA-timeout 任意第三方触发 slash + revoke 联动 slash（[`SkillRegistry.claimTimeoutAndSlash`](contracts/src/SkillRegistry.sol) / `slashOnRevoke`）
+- **待做（v2）**：
+  - **VRF sortition**：用链上随机数自动选 N 个持治理代币的 jurors，替代当前 plaintiff 手动指定 + 系统推荐
+  - **slashOnCourtRuling 联动**：争议判 guilty 时自动 slash provider stake → 当前 SkillRegistry v6.0 没这个钩子，等 v6.1 重部署解锁（`pendingWiring` in [`arc-testnet.json`](contracts/deployments/arc-testnet.json)）
+  - **Bond + Slash**：错误投票方被罚没，受害方从 carepool 补偿
 - 引用：[Kleros 白皮书](https://kleros.io)、[EigenLayer AVS slashing](https://docs.eigenlayer.xyz)
 
 ### Phase 4 · 隐私保护投票
