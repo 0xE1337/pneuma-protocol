@@ -8,9 +8,17 @@
  * 维护规则：
  *   - 每个 query 必须真跑过 /api/orchestrate planOnly，确认 plan.steps.length > 0
  *   - 多 skill 拆解 query 优先（demo 价值高）
+ *   - **必须 inline skill 需要的输入**（否则 planner LLM 会编造 fake input，
+ *     handler 严校验会 throw 或者烧钱跑垃圾 diff/tx）：
+ *       · Code Review 要 `diff: string` —— 把 ```diff ... ``` 块直接写进 query
+ *       · Block Explainer 要 `rawTx: object` —— 太重，避免在首页 example 用
+ *       · Paper Summary 要 `title + abstract` —— 学 「📄 论文摘要」用 `title=...`
  *   - 关键字尽量贴近真实使用场景，但**别用 LLM 不识别的术语**
  *     例：「审计合约」→ LLM 不识别（Code Review desc 是 git diff）
  *         「评审这段 Solidity diff」→ LLM 命中 Code Review ✓
+ *
+ * Phase 2（待补）：planner 加 URL/txHash 嗅探层（GitHub raw fetch +
+ * `eth_getTransactionReceipt`），example 就能用「评审 PR #42」这种链接形态。
  */
 
 export interface QueryExample {
@@ -24,10 +32,20 @@ export interface QueryExample {
 
 export const QUERY_EXAMPLES: QueryExample[] = [
   {
-    label: "🔍 合约 + 交易 + 风险",
-    query:
-      "评审这段 Solidity diff + 解释这笔交易在干什么 + 用一句话总结风险",
-    hint: "3 步并行 → Code Review + Block Explainer + Quick Reasoning",
+    label: "🔍 合约 diff + 风险",
+    query: `评审这段 Solidity diff，并用一句话总结主要风险：
+
+language=solidity
+\`\`\`diff
+@@ -42,7 +42,7 @@ contract FeeVault {
+-        uint256 fee = amount / 10000 * feeBps;
++        uint256 fee = amount * feeBps / 10000;
+         require(token.transfer(treasury, fee), "fee transfer failed");
+-        balances[msg.sender] -= amount;
++        balances[msg.sender] = balances[msg.sender] - amount;
+         token.transfer(msg.sender, amount - fee);
+\`\`\``,
+    hint: "2 步并行 → Code Review（inline diff） + Quick Reasoning（一句话风险）",
   },
   {
     label: "📄 论文摘要",

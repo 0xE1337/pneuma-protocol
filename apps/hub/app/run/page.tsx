@@ -48,6 +48,7 @@ import { CHAIN_ID } from "@/lib/chain";
 import { WrongChainBanner } from "@/app/_components/ChainGuard";
 import { useI18n } from "@/lib/i18n";
 import { QUERY_EXAMPLES } from "@/lib/queryExamples";
+import { DEMO_DEFAULTS, getDemoQueryForSkill } from "@/lib/demoDefaults";
 import Link from "next/link";
 
 // ────────────────────────────────────────────────────────────────────────
@@ -138,6 +139,8 @@ function RunPageInner() {
   const [selectedTokenId, setSelectedTokenId] = useState<bigint | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<bigint | null>(null);
   const [query, setQuery] = useState("");
+  // 用户一旦动过 textarea，就不再被 selectedSkill 切换覆盖（避免吞用户输入）
+  const [userTouchedQuery, setUserTouchedQuery] = useState(false);
 
   // 状态机
   const [step, setStep] = useState<Step>("idle");
@@ -203,6 +206,14 @@ function RunPageInner() {
     () => skills.find((s) => s.skillId === selectedSkillId) ?? null,
     [skills, selectedSkillId],
   );
+
+  // demo 默认值：选中 skill 后若用户还没碰 textarea，按 category 自动填充
+  // 用户敲过键就不再覆盖；切换 skill 也不会吞用户输入
+  useEffect(() => {
+    if (selectedSkill && !userTouchedQuery) {
+      setQuery(getDemoQueryForSkill(selectedSkill.category));
+    }
+  }, [selectedSkill, userTouchedQuery]);
 
   // 稳定的 click handler 引用 —— 跟 React.memo(SoulPick / SkillPick) 配合
   // 让"点 A 不会让 B/C/D 卡片也重渲染"成立，消除 7+ 卡片 fullscan re-render 卡顿
@@ -582,7 +593,10 @@ function RunPageInner() {
                 <textarea
                   className="input min-h-[120px] resize-y font-sans text-sm leading-relaxed"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setUserTouchedQuery(true);
+                  }}
                   placeholder={
                     selectedSkill?.category === "finance"
                       ? "ETH | BTC | SOL | USDC | ARC"
@@ -888,8 +902,8 @@ const MAX_COMMENT_LENGTH = 280;
 
 function CallerRatePanel({ callId, skillName }: { callId: bigint; skillName: string }) {
   const [hover, setHover] = useState(0);
-  const [picked, setPicked] = useState(0);
-  const [comment, setComment] = useState("");
+  const [picked, setPicked] = useState(5);
+  const [comment, setComment] = useState(DEMO_DEFAULTS.rateComment);
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
@@ -1213,7 +1227,10 @@ function SmartRunPanel({
   /** /discover 一键执行跳过来时预填的 query */
   initialQuery?: string;
 }) {
-  const [input, setInput] = useState(initialQuery);
+  // 优先级：URL ?query= → demo 默认（评审 Solidity diff）→ 空
+  const [input, setInput] = useState(
+    initialQuery || DEMO_DEFAULTS.runSmartInitial,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resp, setResp] = useState<OrchestrateResponse | null>(null);
@@ -1302,7 +1319,7 @@ function SmartRunPanel({
             className="input min-h-[120px] resize-y font-sans text-sm leading-relaxed"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="例：评审这段 Solidity diff + 解释这笔交易 + 用一句话总结风险..."
+            placeholder={`例：评审这段 Solidity diff + 一句话总结风险\n\n把 diff/abstract/题目直接贴进来，planner 会抽字段喂 skill。\n（链接形态如 PR URL / tx hash 待 Phase 2 支持）`}
             disabled={busy}
           />
           <button

@@ -35,6 +35,7 @@ import {
 } from "@/lib/reputationScore.v2";
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
+import { DEMO_DEFAULTS } from "@/lib/demoDefaults";
 
 const CATEGORY_COLOR: Record<string, string> = {
   finance: "cyan",
@@ -107,24 +108,24 @@ export default function SoulProfilePage({ params }: { params: Promise<{ soulId: 
           <div className="space-y-3 max-w-2xl">
             <span className="pill-live">Soul #{soulId}</span>
             <h1 className="display text-5xl md:text-6xl">
-              {soulData[0] || "Unnamed Agent"}
+              {soulData[0] || "未命名 Agent"}
             </h1>
             <div className="space-y-2 pt-2 font-mono text-[12px]">
-              <Row label="TBA" value={tba} link={tba ? addressUrl(tba) : undefined} accent="cyan" />
-              <Row label="Owner" value={ownerData} link={ownerData ? addressUrl(ownerData) : undefined} />
+              <Row label="合约钱包" value={tba} link={tba ? addressUrl(tba) : undefined} accent="cyan" />
+              <Row label="持有者" value={ownerData} link={ownerData ? addressUrl(ownerData) : undefined} />
               <Row
-                label="Created"
+                label="创建于"
                 value={`${new Date(Number(soulData[4]) * 1000).toLocaleString()} · Arc Testnet`}
               />
-              {soulData[2] && <Row label="Metadata" value={soulData[2]} />}
+              {soulData[2] && <Row label="元数据" value={soulData[2]} />}
             </div>
           </div>
 
           <div className="flex flex-col gap-4 items-end">
             <div className="flex gap-3 flex-wrap">
-              <StatPill value={valid.length.toString()} label="Calls" color="text-magenta" />
-              <StatPill value={formatUnits(totalUsd, 6)} label="USDC paid" color="text-soul-soft" />
-              <StatPill value={avgRating.toFixed(1)} label="Avg ★" color="text-cyan" />
+              <StatPill value={valid.length.toString()} label="调用次数" color="text-magenta" />
+              <StatPill value={formatUnits(totalUsd, 6)} label="USDC 累计" color="text-soul-soft" />
+              <StatPill value={avgRating.toFixed(1)} label="平均 ★" color="text-cyan" />
             </div>
             {/* Spending Trail link — receipt-feed view of the same TBA,
                 read straight from on-chain PneumaAttestation. */}
@@ -134,7 +135,7 @@ export default function SoulProfilePage({ params }: { params: Promise<{ soulId: 
                 className="surface px-4 py-2 inline-flex items-center gap-2 text-cyan font-mono text-[11px] uppercase tracking-[0.13em] hover:border-cyan transition-colors"
               >
                 <span aria-hidden="true">⌗</span>
-                View spending trail →
+                查看消费明细 →
               </Link>
             )}
             <OwnerActions tokenId={tokenId} owner={ownerData as Address | undefined} />
@@ -163,31 +164,31 @@ export default function SoulProfilePage({ params }: { params: Promise<{ soulId: 
         <section className="space-y-6">
           <div className="flex items-center gap-4 flex-wrap">
             <span className="text-[11px] uppercase tracking-[0.18em] text-cyan font-mono">
-              Contribution History
+              贡献履历
             </span>
             <span className="text-ink-dim text-sm">
-              {valid.length} business attestations
+              {valid.length} 条业务评价
               {transferCount > 0 && (
                 <span className="text-ink-faint">
-                  {" · split into "}
-                  {eras.length} owner era{eras.length > 1 ? "s" : ""}
+                  {" · 分 "}
+                  {eras.length} 个主人时代
                 </span>
               )}
             </span>
             <span className="ml-auto inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.13em] text-ink-dim font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan animate-pulse-dot" /> Live · 8s sync
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan animate-pulse-dot" /> 实时 · 8 秒同步
             </span>
           </div>
 
-          {attestLoading && <div className="text-ink-faint">Loading from chain…</div>}
+          {attestLoading && <div className="text-ink-faint">正在从链上读取…</div>}
 
           {!attestLoading && valid.length === 0 && (
             <div className="surface p-10 text-center text-ink-dim">
-              No attestations yet. Use this Soul on{" "}
+              暂无任何评价。在{" "}
               <Link href="/run" className="text-soul-soft underline underline-offset-2">
                 /run
               </Link>{" "}
-              to write the first one.
+              调用一个 skill 写下第一条。
             </div>
           )}
 
@@ -206,16 +207,15 @@ export default function SoulProfilePage({ params }: { params: Promise<{ soulId: 
 
         {/* Open protocol highlight */}
         <section className="mt-16 surface-gradient p-8 space-y-3">
-          <span className="pill-live">Open Protocol · Cross-dApp Read</span>
+          <span className="pill-live">开放协议 · 跨 dApp 读取</span>
           <p className="text-ink leading-relaxed">
-            This page is just one rendering. Any other dApp can call
+            此页面只是一种渲染。任何其他 dApp 都可以调用
           </p>
           <code className="block px-4 py-3 rounded bg-bg border border-border font-mono text-[12px] text-magenta overflow-x-auto">
             PneumaAttestation.getAttestationsByRecipient(tba)
           </code>
           <p className="text-ink-dim text-sm leading-relaxed">
-            directly with viem and get the same data — no API key, no backend, no permission. Build
-            a competing dApp in 30 seconds.
+            直接用 viem 调，拿到同一份数据——无需 API key、无需后端、无需许可。30 秒就能搭一个竞品 dApp。
           </p>
         </section>
       </div>
@@ -296,7 +296,7 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
   if (!isOwner) {
     return (
       <div className="text-[10px] uppercase tracking-[0.13em] text-ink-faint font-mono text-right max-w-[260px] leading-relaxed">
-        Connect as owner wallet to transfer this Soul. Owner currently:{" "}
+        连接持有者钱包以转移此 Soul。当前持有者：{" "}
         <span className="text-ink-dim">
           {owner.slice(0, 6)}…{owner.slice(-4)}
         </span>
@@ -309,13 +309,13 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
     return (
       <div className="surface px-5 py-4 max-w-sm space-y-2">
         <div className="text-cyan font-mono text-[11px] uppercase tracking-[0.13em]">
-          ✓ Transfer confirmed
+          ✓ 转移完成
         </div>
         <div className="text-ink text-sm break-all font-mono">
           Soul #{tokenId.toString()} → {recipient.slice(0, 6)}…{recipient.slice(-4)}
         </div>
         <div className="text-[10px] text-ink-dim leading-relaxed">
-          History (TBA + attestations) follows the NFT automatically.
+          履历（TBA + 评价）会自动跟随 NFT。
         </div>
         {hash && (
           <a
@@ -324,7 +324,7 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
             rel="noreferrer"
             className="block text-soul-soft underline underline-offset-2 text-[11px] font-mono"
           >
-            View on arcscan →
+            在 arcscan 查看 →
           </a>
         )}
         <button
@@ -335,7 +335,7 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
           }}
           className="text-ink-dim text-[10px] underline underline-offset-2 hover:text-ink"
         >
-          close
+          关闭
         </button>
       </div>
     );
@@ -348,7 +348,7 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
         onClick={() => setOpen(true)}
         className="surface px-5 py-3 text-magenta font-mono text-[12px] uppercase tracking-[0.13em] hover:border-magenta transition-colors"
       >
-        Transfer Soul →
+        转移 Soul →
       </button>
     );
   }
@@ -374,23 +374,23 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
   return (
     <div className="surface p-5 max-w-sm space-y-3">
       <div className="text-[10px] uppercase tracking-[0.13em] text-magenta font-mono">
-        Transfer Soul #{tokenId.toString()}
+        转移 Soul #{tokenId.toString()}
       </div>
       <input
         type="text"
         value={recipient}
         onChange={(e) => setRecipient(e.target.value)}
-        placeholder="0x… recipient address"
+        placeholder="0x… 接收者地址"
         className="w-full px-3 py-2 bg-bg border border-border rounded font-mono text-[11px] text-ink placeholder:text-ink-faint focus:outline-none focus:border-cyan"
         autoFocus
         disabled={submitting}
       />
       <p className="text-[10px] text-ink-dim leading-relaxed">
-        SOUL NFT moves to recipient.{" "}
+        SOUL NFT 转给接收者。{" "}
         <span className="text-ink">
-          TBA address + all attestations follow automatically
+          TBA 地址 + 全部评价自动跟随
         </span>{" "}
-        (TBA is CREATE2-derived from tokenId, not owner).
+        （TBA 由 tokenId CREATE2 派生，不依赖 owner）。
       </p>
       {errMsg && (
         <div className="text-[11px] text-magenta font-mono break-all leading-relaxed">
@@ -404,10 +404,10 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
           className="flex-1 bg-magenta/20 border border-magenta text-magenta px-4 py-2 font-mono text-[11px] uppercase tracking-[0.13em] hover:bg-magenta/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {isPending
-            ? "Sign in wallet…"
+            ? "钱包签名中…"
             : isConfirming
-            ? "Confirming…"
-            : "Confirm transfer"}
+            ? "确认中…"
+            : "确认转移"}
         </button>
         <button
           onClick={() => {
@@ -418,7 +418,7 @@ function OwnerActions({ tokenId, owner }: { tokenId: bigint; owner?: Address }) 
           disabled={submitting}
           className="px-4 py-2 text-ink-dim text-[11px] uppercase tracking-[0.13em] font-mono hover:text-ink disabled:opacity-40"
         >
-          Cancel
+          取消
         </button>
       </div>
     </div>
@@ -517,14 +517,14 @@ function OwnershipNode({ ev, isLast }: { ev: OwnershipEvent; isLast: boolean }) 
               ev.isMint ? "text-cyan" : "text-magenta"
             }`}
           >
-            {ev.isMint ? "Minted" : "Transferred"}
+            {ev.isMint ? "Mint 出生" : "已转让"}
           </span>
           <span className="text-[11px] text-ink-dim font-mono">{dateStr}</span>
         </div>
         <div className="text-[12px] font-mono break-all">
           {!ev.isMint && (
             <>
-              <span className="text-ink-dim">from </span>
+              <span className="text-ink-dim">从 </span>
               <a
                 href={addressUrl(ev.from)}
                 target="_blank"
@@ -535,7 +535,7 @@ function OwnershipNode({ ev, isLast }: { ev: OwnershipEvent; isLast: boolean }) 
               </a>{" "}
             </>
           )}
-          <span className="text-ink-dim">to </span>
+          <span className="text-ink-dim">到 </span>
           <a
             href={addressUrl(ev.to)}
             target="_blank"
@@ -656,15 +656,15 @@ function LaunderingWarning({ transferCount }: { transferCount: number }) {
         </span>
       </div>
       <p className="text-sm text-ink leading-relaxed">
-        This Soul has changed hands{" "}
+        此 Soul 已转手{" "}
         <span className="text-magenta font-mono font-semibold">
           {transferCount}
         </span>{" "}
-        time{transferCount > 1 ? "s" : ""}. Past attestations belong to{" "}
-        <span className="text-ink">previous owners</span> — only the{" "}
-        <span className="text-cyan font-mono">current owner era</span> reflects
-        the agent you'd be hiring today. Each ownership change is anchored
-        on-chain by a SYSTEM attestation written by SoulNFT.
+        次。过去的评价归属于{" "}
+        <span className="text-ink">前任持有者</span>——只有{" "}
+        <span className="text-cyan font-mono">当前主人时代</span>{" "}
+        才反映你今天雇佣的这个 agent。每次所有权变更都通过 SoulNFT 自动写入的
+        SYSTEM 评价在链上锚定。
       </p>
     </section>
   );
@@ -683,7 +683,7 @@ function EraSection({ era }: { era: OwnershipEra }) {
       <div className="opacity-40">
         <div className="flex items-center gap-3 mb-2">
           <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-ink-faint">
-            Past owner era #{era.index} · empty
+            前任主人时代 #{era.index} · 空
           </span>
         </div>
       </div>
@@ -691,8 +691,8 @@ function EraSection({ era }: { era: OwnershipEra }) {
   }
 
   const headerLabel = era.isCurrent
-    ? "Current owner era"
-    : `Past owner era #${era.index}`;
+    ? "当前主人时代"
+    : `前任主人时代 #${era.index}`;
   const headerColor = era.isCurrent ? "text-cyan" : "text-ink-faint";
 
   return (
@@ -1093,8 +1093,8 @@ function EndorseAction({
   onDone: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [stake, setStake] = useState("10");
-  const [context, setContext] = useState("");
+  const [stake, setStake] = useState(DEMO_DEFAULTS.endorse.stake);
+  const [context, setContext] = useState(DEMO_DEFAULTS.endorse.context);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1166,8 +1166,8 @@ function EndorseAction({
       await publicClient.waitForTransactionReceipt({ hash: txHash });
 
       setOpen(false);
-      setStake("10");
-      setContext("");
+      setStake(DEMO_DEFAULTS.endorse.stake);
+      setContext(DEMO_DEFAULTS.endorse.context);
       onDone();
     } catch (err) {
       setError((err as Error).message ?? "Endorsement failed");
@@ -1445,8 +1445,7 @@ function ReputationRadarSection({
     <section className="mb-14 surface-gradient p-8 rounded-lg">
       <header className="flex items-baseline justify-between mb-6">
         <div>
-          <span className="pill-live">V6.0.3 · Multi-Dimensional Identity</span>
-          <h2 className="display text-2xl mt-2">4-axis Reputation Profile</h2>
+          <h2 className="display text-2xl">4-axis Reputation Profile</h2>
           <p className="text-ink-dim text-sm leading-relaxed mt-1 max-w-2xl">
             Pneuma reputation 不是单一积分。Economic（付费交易）、Intellectual（思想引用）、
             Social（社会担保）、Judicial（陪审表现 V6.1）—— 4 维独立累积，加权和构成 agent 综合信用画像。

@@ -7,6 +7,7 @@ import { decodeEventLog, type Hex } from "viem";
 import { WrongChainBanner } from "@/app/_components/ChainGuard";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import { DEMO_DEFAULTS } from "@/lib/demoDefaults";
 
 export default function MintPage() {
   const { t } = useI18n();
@@ -14,8 +15,8 @@ export default function MintPage() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
 
-  const [agentName, setAgentName] = useState("");
-  const [metadataURI, setMetadataURI] = useState("ipfs://demo");
+  const [agentName, setAgentName] = useState(DEMO_DEFAULTS.mint.agentName);
+  const [metadataURI, setMetadataURI] = useState(DEMO_DEFAULTS.mint.metadataURI);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<{ tokenId: bigint; tba: string; tx: Hex } | null>(null);
   const [error, setError] = useState<string | null>(null);
