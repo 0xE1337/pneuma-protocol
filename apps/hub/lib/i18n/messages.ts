@@ -45,7 +45,7 @@ export const messages = {
     "agent_hero.stat_calls": "calls 已结算",
     "agent_hero.copy_button": "复制",
     "agent_hero.copied": "已复制 ✓",
-    "agent_hero.onboard_label": "成为 Sovereign Agent · 接 USDC 单:",
+    "agent_hero.onboard_label": "注册我的 Skill · 上链接单赚 USDC:",
     "agent_hero.onboard_copy_aria": "复制 onboard.md 链接到剪贴板",
     "agent_hero.onboard_hint":
       "把链接粘给你的 AI 助手（Claude / Cursor / GPT）—— 它会扫你机器上的本机能力 → 帮你 mint Soul → 选若干一键注册到 SkillRegistry。从此别人调用就 USDC 直接打到你的 Agent 钱包。想找 AI 替你做事？看「探索」页。",
@@ -355,7 +355,7 @@ export const messages = {
     "agent_hero.stat_calls": "calls settled",
     "agent_hero.copy_button": "Copy",
     "agent_hero.copied": "Copied ✓",
-    "agent_hero.onboard_label": "Become a Sovereign Agent · earn USDC:",
+    "agent_hero.onboard_label": "Register my Skill · earn USDC on-chain:",
     "agent_hero.onboard_copy_aria": "Copy onboard.md link to clipboard",
     "agent_hero.onboard_hint":
       "Paste this into your AI assistant (Claude / Cursor / GPT) — it will scan your local capabilities, mint a Soul for you, and register selected skills on the SkillRegistry. Buyers pay USDC straight into your Agent wallet. Looking to hire an AI instead? See the Discover page.",
