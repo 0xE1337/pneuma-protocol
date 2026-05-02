@@ -39,20 +39,20 @@ import {
 import { useLiveStore, type LiveEvent, type LiveEventKind } from "./store";
 
 /**
- * 历史回放 block range —— Arc Testnet ~8s/block
+ * 历史回放 block range —— Arc Testnet 实测 ~0.5s/block（不是文档说的 8s）
  *
  * Arc Testnet RPC 硬限 eth_getLogs 单次 10000 blocks（超过返回 413 Content
- * Too Large）。SkillRegistry 部署 2026-04-29，到现在历史 ~7 天 ≈ 75600 blocks，
- * 所以拉 90000 blocks（~8 天 + 余量）覆盖所有 demo 资产，包括早期 12-call burst：
+ * Too Large）。Demo 期间 burst 集中在最近几天，90000 blocks 在 0.5s/block 下
+ * 覆盖最近 ~12-13 小时 的活动。由于链早期块速更慢，往回看 90000 blocks
+ * 实际能覆盖到 demo 起步阶段的多日数据（由 snapshot 路由实测验证）。
  *   - 每段 9500 blocks（< 10000 RPC 上限，留 500 buffer 防 latest 漂移）
  *   - 90000 / 9500 ≈ 10 段 × 9 event specs = 90 RPC calls
  *   - 段之间串行 + 80ms 间隔（throttle 减半，仍够防 Arc RPC rate limit）
- *   - 实测 Vercel Fluid Compute 客户端冷启 + 全量 backfill 总耗 ~15-25s
  *
- * 之前 HISTORY_BLOCK_RANGE = 19000（~42 小时）漏掉了早于 42h 的 100+ 笔 call，
- * 用户在 dashboard 看到 callCount=125 但 events / caller 节点只显示最近 17 笔。
+ * 客户端 fallback 路径（仅在 /api/dashboard/snapshot fetch 失败时跑）。
+ * 主路径 fastPathSnapshot 走服务端 Promise.all 真实块时间戳精校。
  */
-const HISTORY_BLOCK_RANGE = 90000n; // ~8 天，覆盖完整 demo 历史
+const HISTORY_BLOCK_RANGE = 90000n;
 const CHUNK_SIZE = 9500n; // 单次 getLogs 上限（< 10000 RPC 限）
 
 /**

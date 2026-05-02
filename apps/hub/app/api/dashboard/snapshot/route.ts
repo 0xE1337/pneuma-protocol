@@ -102,11 +102,18 @@ export async function GET() {
     const earliest =
       latest > HISTORY_BLOCK_RANGE ? latest - HISTORY_BLOCK_RANGE : 0n;
 
-    // 拿最新块时间戳作为 anchor，事件时间按 8s/block 换算
-    // 这样 backfill 的"5h ago"是真实的链上时间，不再全部显示 "now"
+    // 拿最新块时间戳作为 anchor。
+    // 注意：Arc Testnet 实测 ~0.51s/block（不是文档说的 8s/block），所以
+    // 早期 8s/block 假设让所有事件被估算成 "3d ago" 实际只有几小时——把
+    // 每 block 多减 7.5s。
+    //
+    // 终极修法：对所有有事件的 unique blockNumber 真实拉一次 getBlock，
+    // 服务端 Promise.all 并行，零节流，慢点也是一次性 mount cost。这样
+    // chainTimestamp 准确到秒，跟链 8s vs 0.5s 假设无关。
     const latestBlockMeta = await client.getBlock({ blockNumber: latest });
     const latestBlockTimestampMs = Number(latestBlockMeta.timestamp) * 1000;
-    const SECONDS_PER_BLOCK = 8;
+    // fallback 估算用（仅在并行 getBlock 拉块时间失败时兜底）
+    const FALLBACK_SECONDS_PER_BLOCK = 0.5;
 
     // 切 chunks（每段 ≤ 9500 blocks，Arc RPC 10000 上限内）
     const chunks: Array<{ from: bigint; to: bigint }> = [];
@@ -137,6 +144,27 @@ export async function GET() {
     );
     const buckets = await Promise.all(fetchPromises);
 
+    // 收集所有事件涉及的 unique blockNumbers，并行真实拉每个块的 timestamp
+    // 这是服务端，没有浏览器 6 并发限制，Vercel function 跟 Arc RPC 同区，
+    // 50-100 并发 getBlock 也就 1-2s。准确性 > "省一次 RPC"
+    const uniqueBlocks = new Set<bigint>();
+    for (const { logs } of buckets) {
+      for (const log of logs as Array<{ blockNumber: bigint }>) {
+        uniqueBlocks.add(log.blockNumber);
+      }
+    }
+    const blockTimestampMap = new Map<string, number>();
+    await Promise.all(
+      Array.from(uniqueBlocks).map(async (bn) => {
+        try {
+          const blk = await client.getBlock({ blockNumber: bn });
+          blockTimestampMap.set(bn.toString(), Number(blk.timestamp) * 1000);
+        } catch {
+          // RPC 抖动 → 此块走 fallback 估算（latestTs - delta × 0.5s）
+        }
+      }),
+    );
+
     // 扁平化 + 按 (blockNumber, logIndex) 升序
     const flat: SerializedEvent[] = [];
     for (const { kind, logs } of buckets) {
@@ -146,10 +174,12 @@ export async function GET() {
         blockNumber: bigint;
         args: Record<string, unknown>;
       }>) {
-        // 用块号 delta × 8s 估算时间；比每个 event 单独 getBlock 便宜 200×
-        const blockDelta = Number(latest - log.blockNumber);
+        // 优先真实块时间戳；失败 fallback 到 0.5s/block 估算
+        const realTs = blockTimestampMap.get(log.blockNumber.toString());
         const chainTimestamp =
-          latestBlockTimestampMs - blockDelta * SECONDS_PER_BLOCK * 1000;
+          realTs ??
+          latestBlockTimestampMs -
+            Number(latest - log.blockNumber) * FALLBACK_SECONDS_PER_BLOCK * 1000;
         flat.push({
           id: `${log.transactionHash}:${log.logIndex}`,
           kind,
