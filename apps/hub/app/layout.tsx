@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Nunito, Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 // 全局加载 animal-island-ui 预编译 CSS（class 已用 `animal-` 哈希前缀，零污染）
 // 之前仅在 /island-demo layout 内加载；island 主题成为默认后，全站需要它来渲染
@@ -12,30 +11,21 @@ import { Navbar } from "./_components/Navbar";
 import { WrongChainBanner } from "./_components/ChainGuard";
 
 /* ─── Fonts ───────────────────────────────────────────────────────────
- * next/font/google 自托管 + 零 CLS + 自动 preload。
- * 暴露 CSS variable 给 globals.css 主题切换时按需切栈。
- *   - Nunito        : island 主体 / 按钮（warm rounded sans）
- *   - Zen Maru Gothic: island 标题（手写圆润日系）
- *   - Geist Sans/Mono: cyber-soul 原字体栈（保留协议数据观感）
- *
- * 注：Noto Sans SC（中文 fallback）暂不通过 next/font 加载——
- *      Google 的 SC 子集体积大，preload 反而拖累 LCP；
- *      改为 system fallback (`PingFang SC` / `Microsoft YaHei`)，
- *      实际中文渲染由系统字体接管。
+ * 原本用 next/font/google 自动拉 Nunito + Zen Maru Gothic，但中国大陆
+ * dev/build 阶段 Google Fonts 域名被 GFW 阻断 → TLS 握手失败 → 编译
+ * hang 死。改成 CSS 变量 + 系统字体栈兜底：
+ *   - Nunito 风味     → 系统圆润 sans (Avenir/PingFang SC) 接近视觉
+ *   - Zen Maru 风味   → 日系圆体 (Hiragino Maru Gothic ProN) 接近视觉
+ *   - Geist Sans/Mono → 仍由 geist 包提供（@vercel/style 不走 Google）
+ * 评审环境如需精确 Nunito/Zen Maru，把字体本地化到 public/fonts 后用
+ * `next/font/local` 重新接入即可，不影响其他代码（style 仍读 var(--font-*)）。
  * ─────────────────────────────────────────────────────────────────── */
-const nunito = Nunito({
-  subsets: ["latin"],
-  variable: "--font-nunito",
-  weight: ["400", "500", "600", "700", "800", "900"],
-  display: "swap",
-});
-
-const zenMaruGothic = Zen_Maru_Gothic({
-  subsets: ["latin"],
-  variable: "--font-zen-maru",
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
+const fontFallbackStyle = `
+:root {
+  --font-nunito: "Avenir Next", "Avenir", "Nunito", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-zen-maru: "Hiragino Maru Gothic ProN", "Yu Gothic", "Avenir Next Rounded", "Nunito", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+`;
 
 export const metadata: Metadata = {
   title: "Pneuma",
@@ -79,9 +69,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${GeistSans.variable} ${GeistMono.variable} ${nunito.variable} ${zenMaruGothic.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
       <head>
+        {/* 字体回退变量 —— 替代 next/font/google（GFW 阻断 fonts.googleapis.com） */}
+        <style dangerouslySetInnerHTML={{ __html: fontFallbackStyle }} />
         {/* 必须放 <head>：浏览器解析 <body> 之前完成主题写入，渲染第 1 帧就对 */}
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
