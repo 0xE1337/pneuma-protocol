@@ -34,6 +34,21 @@ export const metadata: Metadata = {
 };
 
 /**
+ * 全站 force-dynamic —— 关掉 SSG / static-generation
+ *
+ * 原因：
+ * - hub 全站基本上是 dApp（用 wagmi/rainbowkit 客户端读链 + 钱包），SSG 阶段
+ *   wagmi 的 storage adapter 会调用浏览器才有的 localStorage / indexedDB API，
+ *   Vercel 冷启动 prerender 时直接 TypeError 退出 build。
+ * - 静态生成对 dApp 价值很低（数据本来就是每次 client RPC 拉），SSR 反而更稳。
+ * - Vercel Hobby plan 上 SSR 跟 SSG 性能差异可忽略；保 build 绿色优先。
+ *
+ * Cache-Control 仍由各 route handler / Next.js 默认控制；这里只关 SSG 不关
+ * runtime cache。
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * Inline pre-hydration theme bootstrapper —— 防 FOUC 抖动的核心抓手
  *
  * 问题：之前在 SSR 写死 data-theme="island"，但 client mount 后

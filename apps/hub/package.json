@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3100",
-    "build": "next build",
+    "build:deps": "pnpm -F @pneuma/x402 -F @pneuma/reputation-formula -F @pneuma/orchestrator build",
+    "build": "pnpm run build:deps && next build",
     "start": "next start -p 3100"
   },
   "dependencies": {
