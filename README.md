@@ -12,10 +12,14 @@
 [![USDC native](https://img.shields.io/badge/payment-USDC%20native-26a17b)](#)
 [![anet compatible](https://img.shields.io/badge/anet-compatible-ff69b4)](#agent-network-兼容性)
 
-**部署到自己 Vercel：**
+**部署到自己 Vercel — 三条路径（按 AI-friendly 程度递增）：**
 
-- **新评委 / fork 用户** → [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F0xE1337%2Fpneuma-protocol&root-directory=apps%2Fhub&project-name=pneuma-hub&repository-name=pneuma-protocol-fork&env=NEXT_PUBLIC_CHAIN_ID,NEXT_PUBLIC_CHAIN_RPC,NEXT_PUBLIC_USDC_ADDRESS,NEXT_PUBLIC_SOUL_NFT_ADDRESS,NEXT_PUBLIC_SOUL_ACCOUNT_IMPL,NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS,NEXT_PUBLIC_PNEUMA_ATTESTATION_ADDRESS,NEXT_PUBLIC_BUDGET_CONTROLLER_ADDRESS,NEXT_PUBLIC_PNEUMA_TIMELOCK_ADDRESS,NEXT_PUBLIC_REPUTATION_GRAPH_ADDRESS,NEXT_PUBLIC_PNEUMA_COMMONS_ADDRESS,NEXT_PUBLIC_ERC6551_REGISTRY,ARC_TESTNET_RPC_URL,DEEPSEEK_API_KEY,TEST_SELLER_PRIVATE_KEY&envDescription=See%20apps/hub/.env.example%20for%20each%20var.%20TEST_SELLER_PRIVATE_KEY%20MUST%20differ%20from%20skill%20owner%20keys%20to%20avoid%20SkillRegistry.SelfCallForbidden().&envLink=https%3A%2F%2Fgithub.com%2F0xE1337%2Fpneuma-protocol%2Fblob%2Fmain%2Fapps%2Fhub%2F.env.example) 一键克隆并部署
-- **已经 fork / clone 过 repo** → 去 [vercel.com/new](https://vercel.com/new) 从 "Import Git Repository" 列表选你 fork 的版本，Root Directory 设 `apps/hub`，env vars 照 [`apps/hub/.env.example`](apps/hub/.env.example) 填
+- 🤖 **AI agent 一键全自动**（推荐 · ~3 分钟，零浏览器步骤）
+  让 Claude / Cursor / GPT 把 [`https://pneuma-hub.vercel.app/vercel-deploy-skill.md`](https://pneuma-hub.vercel.app/vercel-deploy-skill.md) 复制进对话，跟它说 "deploy Pneuma to my Vercel"。AI 会找你要 3 个 secrets（VERCEL_TOKEN / DEEPSEEK_API_KEY / TEST_SELLER_PRIVATE_KEY），跑 [`scripts/vercel-deploy.mjs`](scripts/vercel-deploy.mjs) 端到端配 16 个 ENV + 触发部署 + 健康检查。**Pneuma 协议自家产品也用 agent 部署，dogfood**。
+
+- 🖱 **手动浏览器 fork-and-deploy**（评委 / 新用户）→ [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F0xE1337%2Fpneuma-protocol&root-directory=apps%2Fhub&project-name=pneuma-hub&repository-name=pneuma-protocol-fork&env=NEXT_PUBLIC_CHAIN_ID,NEXT_PUBLIC_CHAIN_RPC,NEXT_PUBLIC_USDC_ADDRESS,NEXT_PUBLIC_SOUL_NFT_ADDRESS,NEXT_PUBLIC_SOUL_ACCOUNT_IMPL,NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS,NEXT_PUBLIC_PNEUMA_ATTESTATION_ADDRESS,NEXT_PUBLIC_BUDGET_CONTROLLER_ADDRESS,NEXT_PUBLIC_PNEUMA_TIMELOCK_ADDRESS,NEXT_PUBLIC_REPUTATION_GRAPH_ADDRESS,NEXT_PUBLIC_PNEUMA_COMMONS_ADDRESS,NEXT_PUBLIC_ERC6551_REGISTRY,ARC_TESTNET_RPC_URL,DEEPSEEK_API_KEY,TEST_SELLER_PRIVATE_KEY&envDescription=See%20apps/hub/.env.example%20for%20each%20var.%20TEST_SELLER_PRIVATE_KEY%20MUST%20differ%20from%20skill%20owner%20keys%20to%20avoid%20SkillRegistry.SelfCallForbidden().&envLink=https%3A%2F%2Fgithub.com%2F0xE1337%2Fpneuma-protocol%2Fblob%2Fmain%2Fapps%2Fhub%2F.env.example) 一键克隆并部署。
+
+- 🔧 **已 fork repo**（自己已经在维护 fork）→ 去 [vercel.com/new](https://vercel.com/new) 从 "Import Git Repository" 列表选你 fork 的版本，Root Directory 设 `apps/hub`，env vars 照 [`apps/hub/.env.example`](apps/hub/.env.example) 填。
 
 > 部署后请保证你电脑上 `pnpm tunnels:up` + `pnpm start:all` 在跑——5 个 skill 服务跑在你机器上，hub 通过 cloudflared 公网链调用。详见 [`apps/hub/VERCEL_DEPLOY.md`](apps/hub/VERCEL_DEPLOY.md)。
 
