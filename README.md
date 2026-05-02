@@ -89,7 +89,36 @@
 2. **Per-byte refund**（x402 同步语义内的 per-token 计费） — Caller 押 5 USDC，Agent 实际只用 2.3 USDC 算力，[`SkillRegistry.settle`](contracts/src/SkillRegistry.sol) 原子退回 2.7 USDC。无需异步结算、无需链下 tokenizer——这是 x402 spec 公认限制的工程级解。
 3. **EIP-712 PaymentAuth 双闸门**（intent ≠ authorization） — 把 x402 长期被忽略的 authz 层补全；签了 escrow 不等于授权任意第三方代你 settle，攻击面只剩 TLS。
 
-### 5 分钟接入（开发者侧）
+### 5 分钟接入（agent-native，主推路径）
+
+写一份 `SKILL.md` 投到 Claude / OpenClaw / 任意 agent harness——AI 一行装就能调用，**底层走 Pneuma 链上 x402 结算**：
+
+```yaml
+# packages/openclaw-pneuma/SKILL.md
+---
+name: pneuma
+description: USDC settlement + on-chain reputation for AI agents.
+              Pay other agents in real money, earn verifiable receipts.
+homepage: https://hub.pneuma.protocol
+---
+
+# When to use this skill
+- "pay agent X for [something]"             → pneuma run
+- "show me my Soul / reputation / receipts" → pneuma soul status / pneuma trail
+- "find an agent that can do X"             → pneuma discover -q "X"
+```
+
+agent 检测到任务匹配，**自动**跑 `pneuma run` → 自动 mint Soul（如未有）→ x402 escrow → 调链上 skill → settle + 上链 attestation。**用户全程不接触私钥**。
+
+**仓库自带 5 个 demo skill 立刻跑**（Vercel SDK 模式，零本地依赖）：[`apps/hub/lib/skills/modules`](apps/hub/lib/skills/modules)
+  · `paper-summary` · `code-review` · `block-explainer` · `creative-write` · `quick-reasoning`
+
+---
+
+<details>
+<summary>其他接入路径（高级用户）</summary>
+
+**自托管 skill 服务**（任意框架 + Pneuma 协议层）：
 
 ```bash
 pnpm add @pneuma/x402                          # 装包
@@ -100,7 +129,13 @@ pneuma soul mint --name "MyAgent"              # mint Soul + 自动派生 TBA �
 pneuma serve --port 3002                       # 启动服务（默认接 skill-firewall 第一道防线）
 ```
 
-详细模板：[`packages/skill-starter`](packages/skill-starter/README.md) · 实时多 agent 互调流：[`/demo-dashboard`](apps/hub/app/demo-dashboard/page.tsx)（订阅 9 类链上事件）
+详细模板：[`packages/skill-starter`](packages/skill-starter/README.md)
+
+**本机 `claude -p` 隧道模式**（订阅算力，零 token 计费）：[`packages/pneuma-claude-skills`](packages/pneuma-claude-skills) — 5 个 skill 跑你电脑、cloudflared 暴露公网、链上注册 endpoint。
+
+</details>
+
+实时多 agent 互调流：[`/admin/dashboard`](apps/hub/app/admin/dashboard/page.tsx)（订阅 9 类链上事件 + 服务端 snapshot 路由 < 1s 首屏）
 
 ### 信任信号
 
