@@ -1,36 +1,17 @@
 "use client";
 
-import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
-import "@rainbow-me/rainbowkit/styles.css";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
-import { WagmiProvider } from "wagmi";
-import { wagmiConfig } from "@/lib/wagmi";
-import { I18nProvider } from "@/lib/i18n";
-import { ThemeProvider } from "@/lib/theme";
+/**
+ * Providers shim —— dynamic({ ssr: false }) 加载真正的 ProvidersClient
+ *
+ * 见 providers-client.tsx 顶部注释解释为什么 wagmi/RainbowKit 必须 client-only。
+ */
+
+import dynamic from "next/dynamic";
+
+const ProvidersClient = dynamic(() => import("./providers-client"), {
+  ssr: false,
+});
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
-
-  return (
-    <ThemeProvider>
-    <I18nProvider>
-      <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider
-            theme={darkTheme({
-              accentColor: "oklch(75% 0.18 280)",
-              accentColorForeground: "oklch(95% 0.005 270)",
-              borderRadius: "small",
-              fontStack: "system",
-            })}
-            modalSize="compact"
-          >
-            {children}
-          </RainbowKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </I18nProvider>
-    </ThemeProvider>
-  );
+  return <ProvidersClient>{children}</ProvidersClient>;
 }
