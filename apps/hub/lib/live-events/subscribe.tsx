@@ -142,11 +142,11 @@ function useHistoryBackfill() {
      */
     async function fastPathSnapshot(): Promise<boolean> {
       try {
-        const resp = await fetch("/api/dashboard/snapshot", {
-          // Next.js 客户端默认 fetch 是 no-store；显式 force-cache 让浏览器
-          // 也参与 stale-while-revalidate（边缘 + 浏览器双层缓存）
-          cache: "force-cache",
-        });
+        // 浏览器默认 cache 模式 + 响应头 max-age=0 = 每次请求都问 CDN，
+        // CDN 内 s-maxage=30 自己命中边缘缓存（warm <100ms）。
+        // 之前 cache: "force-cache" 让浏览器把旧版（无 chainTimestamp）的
+        // snapshot 永久 false-hit 到本地 HTTP cache 上，刷不掉。
+        const resp = await fetch("/api/dashboard/snapshot");
         if (!resp.ok) return false;
         const data = (await resp.json()) as {
           events: Array<{
