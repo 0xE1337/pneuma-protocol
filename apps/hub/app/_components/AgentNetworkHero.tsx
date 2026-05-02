@@ -21,6 +21,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useReadContract } from "wagmi";
+import { Card, Button } from "animal-island-ui";
 import {
   SOUL_NFT,
   SoulNFTAbi,
@@ -164,29 +165,29 @@ export function AgentNetworkHero() {
         </a>
       </div>
 
-      {/* 主 CTA —— 主页只放 seller 入口 (/onboard.md)：把你的 AI 注册到协议接 USDC 单。
-          买家 (/agent.md) 入口在 /discover 那边，IA 上单一意图 — 不混不重复。 */}
+      {/* 主 CTA —— animal-island-ui 真组件：Card + Button，统一森友会大圆角立体感 */}
       <div className="w-full max-w-3xl mt-1">
-        <div className="surface px-4 py-3 md:px-5 md:py-4 flex items-center gap-3">
-          <span className="text-[10px] md:text-[11px] font-mono text-ink-faint shrink-0 uppercase tracking-wider">
-            {t("agent_hero.onboard_label")}
-          </span>
-          <code className="font-mono text-[12px] md:text-[14px] text-ink truncate flex-1 text-left">
-            {onboardUrlDisplay}
-          </code>
-          <button
-            type="button"
-            onClick={onCopyOnboard}
-            className={`shrink-0 px-3 py-1.5 rounded font-mono text-[10px] md:text-[11px] uppercase tracking-wide transition-colors ${
-              onboardCopied
-                ? "bg-magenta/20 text-magenta"
-                : "bg-border/70 text-ink hover:bg-border"
-            }`}
-            aria-label={t("agent_hero.onboard_copy_aria")}
-          >
-            {onboardCopied ? t("agent_hero.copied") : t("agent_hero.copy_button")}
-          </button>
-        </div>
+        <Card color="app-yellow">
+          <div className="flex flex-col sm:flex-row items-stretch gap-3 p-1">
+            <div className="flex-1 flex flex-col gap-2 text-left">
+              <span className="text-[11px] md:text-[12px] font-bold uppercase tracking-wider text-[#794f27]">
+                {t("agent_hero.onboard_label")}
+              </span>
+              <code className="font-mono text-[13px] md:text-[15px] text-[#794f27] break-all">
+                {onboardUrlDisplay}
+              </code>
+            </div>
+            <div className="flex items-center justify-end shrink-0">
+              <Button
+                type={onboardCopied ? "default" : "primary"}
+                onClick={onCopyOnboard}
+                aria-label={t("agent_hero.onboard_copy_aria")}
+              >
+                {onboardCopied ? t("agent_hero.copied") : t("agent_hero.copy_button")}
+              </Button>
+            </div>
+          </div>
+        </Card>
         <p className="text-[12px] text-ink-faint mt-2.5 leading-relaxed max-w-2xl mx-auto">
           {t("agent_hero.onboard_hint")}
         </p>
