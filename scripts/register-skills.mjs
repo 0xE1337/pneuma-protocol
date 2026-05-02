@@ -204,7 +204,13 @@ function buildPlan(candidates) {
 /* ─────────────────────────────────────────────────────────────────────
  * Execute one tx via cast send
  * ───────────────────────────────────────────────────────────────────── */
-function executeOne(action) {
+/** Redact private key from any error string. Critical for safe stderr output. */
+function redactPK(s) {
+  if (!s || !activeKey) return s;
+  return s.split(activeKey).join("0xPK_REDACTED");
+}
+
+function executeOne(action, attempt = 0, maxAttempts = 4) {
   if (!activeKey) {
     return { ...action, status: "fail", error: "no active wallet" };
   }
@@ -224,14 +230,27 @@ function executeOne(action) {
     return {
       ...action,
       status: "ok",
+      attempts: attempt + 1,
       txHash: receipt.transactionHash,
       blockNumber: receipt.blockNumber,
-      // skillId is in event log; cast send doesn't decode but we can find it:
-      // the SkillRegistered event's first indexed topic (after sig) is skillId
+      // SkillRegistered event's first indexed topic (after sig) is skillId
       skillIdHint: receipt.logs?.[0]?.topics?.[1] || null,
     };
   } catch (e) {
-    return { ...action, status: "fail", error: String(e?.message ?? e).slice(0, 400) };
+    const errMsg = redactPK(String(e?.stderr || e?.message || e)).slice(0, 400);
+    const isTransient = /tls handshake|client error|Connect|ETIMEDOUT|ECONNRESET|nonce too low/i.test(errMsg);
+    if (isTransient && attempt + 1 < maxAttempts) {
+      // Sync sleep so we stay sequential — Arc Testnet RPC under GFW is flaky
+      const sleepMs = 2000 * (attempt + 1);
+      execFileSync("sleep", [String(sleepMs / 1000)]);
+      return executeOne(action, attempt + 1, maxAttempts);
+    }
+    return {
+      ...action,
+      status: "fail",
+      attempts: attempt + 1,
+      error: errMsg,
+    };
   }
 }
 
