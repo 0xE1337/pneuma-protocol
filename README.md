@@ -38,7 +38,7 @@
 | Sponsor Track | 项目 | 路径 |
 |---|---|---|
 | 🦞 **OpenClaw** Agent Skills | SKILL.md package — OpenClaw 龙虾一行装：`openclaw skills install pneuma` | [`packages/openclaw-pneuma`](packages/openclaw-pneuma) |
-| ⚖ **P2P Service Gateway** | 多陪审员 P2P 仲裁服务，Python FastAPI + anet mesh discover + web3 finalize | [`pneuma-court-p2p`](https://github.com/0xE/pneuma-court-p2p)（独立 Python 仓库）|
+| ⚖ **P2P Service Gateway** | 多陪审员 P2P 仲裁服务，Python FastAPI + anet mesh discover + web3 finalize | [`pneuma-court-p2p`](https://github.com/0xE1337/pneuma-court-p2p)（独立 Python 仓库）|
 
 主项目 (`pneuma-protocol`) 提供合约 + hub UI + 公式包 + 全部协议层创新；两个 sponsor track 是协议拓展面的实证：**协议不绑平台**。
 

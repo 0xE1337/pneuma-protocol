@@ -182,7 +182,7 @@ export function AgentNetworkHero() {
           <span>{t("agent_hero.openclaw_chip")}</span>
         </a>
         <a
-          href="https://github.com/0xE/pneuma-court-p2p"
+          href="https://github.com/0xE1337/pneuma-court-p2p"
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan/40 bg-cyan/5 text-[11px] font-mono text-cyan hover:border-cyan/70 hover:bg-cyan/10 transition-colors"

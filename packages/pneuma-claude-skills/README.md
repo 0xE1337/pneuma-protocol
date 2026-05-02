@@ -126,7 +126,7 @@ SkillRegistry.settle → 转 USDC 给你 + 写 attestation
 
 ### 为什么 spawn `claude -p` 而不是 Anthropic SDK？
 
-参考 [pneuma-court-p2p/src/court_agent/jurors/_runner.py](https://github.com/0xE/pneuma-court-p2p/blob/main/src/court_agent/jurors/_runner.py)（南客松 S2 P2P 赛道独立项目）的 `_ask_claude_cli` 实现。同样的设计原则：
+参考 [pneuma-court-p2p/src/court_agent/jurors/_runner.py](https://github.com/0xE1337/pneuma-court-p2p/blob/main/src/court_agent/jurors/_runner.py)（南客松 S2 P2P 赛道独立项目）的 `_ask_claude_cli` 实现。同样的设计原则：
 
 - **零 API key**：Anthropic SDK 要 `ANTHROPIC_API_KEY`，等于让操作者付**两份钱**（订阅 + API token）
 - **走订阅**：`claude -p` 子进程读 OAuth keychain，复用你 Claude Code 的算力

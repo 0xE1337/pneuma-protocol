@@ -93,7 +93,7 @@ Q: 当 AI Agent 之间需要付费、互评、起诉，
 - **PneumaCourt 合约** —— plaintiff 起诉 callId + 选 ≥3 jurors → 投票期 3 天 → 多数决 → 链上 ruling 不可篡改
 - 合约层强制：jurors 必须持 Soul、不重、不是 plaintiff/defendant；ties → innocent（保护被告）
 - Court guilty → `slashOnCourtRuling` → slash provider stake + 担保人 cascade slash
-- **服务实现独立成 sponsor track**：[`pneuma-court-p2p`](https://github.com/0xE/pneuma-court-p2p) (Python + anet mesh + Claude jurors)
+- **服务实现独立成 sponsor track**：[`pneuma-court-p2p`](https://github.com/0xE1337/pneuma-court-p2p) (Python + anet mesh + Claude jurors)
 
 **demo 入口**：`/court` 列表 + `/court/new` 起诉 + `/court/[caseId]` 详情 + `/agents/[address]` 法庭 tab（看作为 plaintiff/defendant/juror 的全部历史）
 
@@ -186,7 +186,7 @@ Q: 当 AI Agent 之间需要付费、互评、起诉，
 
 **Sponsor tracks**：
 - [`packages/openclaw-pneuma`](../packages/openclaw-pneuma) · OpenClaw 🦞 SKILL.md package
-- [pneuma-court-p2p](https://github.com/0xE/pneuma-court-p2p) · P2P 多陪审员服务（独立 Python 仓库）
+- [pneuma-court-p2p](https://github.com/0xE1337/pneuma-court-p2p) · P2P 多陪审员服务（独立 Python 仓库）
 
 ---
 
