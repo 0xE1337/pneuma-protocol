@@ -105,6 +105,11 @@ export default function DiscoverPage() {
           </p>
         </header>
 
+        {/* 「让你 AI agent 替你 discover」入口 —— 把这个 skill manifest URL 粘到
+            Claude / Cursor / GPT，agent 接到任务后自动 POST /api/orchestrate 选
+            agent + 付 USDC + 拿结果。这是 /discover 页给"已经有 AI 助手"用户的捷径。 */}
+        <AgentSkillCTA />
+
         {/* 自然语言搜索框 —— planner LLM (planOnly) → 渲染 plan → 一键跳 /run 执行 */}
         <SearchBox />
 
@@ -170,6 +175,83 @@ interface PlanOnlyResponse {
 }
 
 // (QUERY_EXAMPLES 抽到 lib/queryExamples.ts，import 在文件顶部)
+
+/**
+ * AgentSkillCTA —— 给"已经有 AI agent"的用户的捷径入口
+ *
+ * 把 /agent.md 的 manifest URL 粘到 Claude / Cursor / GPT 等任意 AI agent，
+ * 之后用户跟自己 AI agent 说"帮我审合约/写文案/总结论文"，agent 会自动
+ * 调 POST /api/orchestrate 来这个 marketplace 选 sovereign agent + 真付 USDC
+ * + 拿结果。Zero install — 纯 HTTP 协议。
+ *
+ * 这块设计上跟 SearchBox 互补：
+ *   SearchBox    —— 人在浏览器里手动 plan + 跳 /run 执行
+ *   AgentSkillCTA—— 让 AI agent 在用户对话流里自动 dispatch（不离开 ChatGPT/Claude）
+ */
+function AgentSkillCTA() {
+  const [copied, setCopied] = useState(false);
+  const url =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/agent.md`
+      : "https://pneuma-hub.vercel.app/agent.md";
+  const display = url.replace(/^https?:\/\//, "");
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // 旧浏览器静默降级
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-cyan/30 bg-cyan/5 p-5 space-y-3">
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <span className="text-cyan font-semibold text-sm">
+          🤖 让你的 AI 替你 Discover
+        </span>
+        <span className="text-[11px] uppercase tracking-[0.18em] text-cyan/70 font-mono">
+          Skill manifest · zero install
+        </span>
+      </div>
+      <p className="text-[13px] text-ink-dim leading-relaxed">
+        已经有 AI 助手（Claude / Cursor / GPT / OpenClaw）？复制这个链接粘进去——
+        以后你跟它说"帮我审合约"或"写一句 slogan"，它会自动来 Pneuma marketplace
+        按声誉 / 价格选 sovereign agent，真付 USDC，把结果带回给你。
+      </p>
+      <div className="flex flex-col sm:flex-row items-stretch gap-2">
+        <code className="font-mono text-[12px] md:text-[13px] text-ink truncate flex-1 px-3 py-2 rounded bg-bg border border-border text-left">
+          {display}
+        </code>
+        <button
+          type="button"
+          onClick={onCopy}
+          className={`shrink-0 px-4 py-2 rounded font-mono text-[11px] uppercase tracking-wide transition-colors ${
+            copied
+              ? "bg-cyan/30 text-cyan"
+              : "bg-cyan/15 text-cyan hover:bg-cyan/25"
+          }`}
+          aria-label="复制 agent.md 链接到剪贴板"
+        >
+          {copied ? "已复制 ✓" : "复制"}
+        </button>
+      </div>
+      <p className="text-[11px] text-ink-faint font-mono">
+        看 manifest 全文 →{" "}
+        <a
+          href="/agent.md"
+          target="_blank"
+          rel="noreferrer"
+          className="text-cyan hover:underline"
+        >
+          /agent.md
+        </a>
+      </p>
+    </div>
+  );
+}
 
 /**
  * SearchBox —— Discover 真智能搜索
