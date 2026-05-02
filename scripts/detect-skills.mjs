@@ -45,11 +45,84 @@ const ARG_HISTORY = process.argv.includes("--history");
  * 命中策略：选 pack 后，scanner 输出该 pack 在本机能落地的 candidates
  * 子集（id 列出但本机没装的会被跳过）。
  * ───────────────────────────────────────────────────────────────────── */
+/**
+ * DEMO_5_HARDCODED —— 跟 packages/pneuma-claude-skills/script/start-tunnels.mjs 100% 对齐
+ *
+ * 这是**唯一一组在用户机器上不扫描、直接由 demo server 进程提供 HTTP endpoint** 的 candidate。
+ * 端口 3101-3105 由 `pnpm dev:all` 起，cloudflared `pnpm tunnels:up` 暴露成 trycloudflare.com URL，
+ * 写入 packages/pneuma-claude-skills/.tunnels.json。register-skills.mjs --pack=demo
+ * --tunnels-json=... 时 5/5 命中，零 placeholder fallback。
+ *
+ * 为什么 hardcode 而不是扫机器：detect-skills.mjs 扫的是 ~/.claude/ + PATH + brew，这 5 个 demo
+ * server id 不在任何扫描源里——它们是 packages/pneuma-claude-skills/ 内部的 server 进程 id，
+ * 跟用户机器上的"我有什么能力"是两个独立体系。原来 quickstart pack 的 5 个 explicit id
+ * (claude-cli / agent-code-reviewer / ...) 是用户机器扫到的 metadata 但**没有 server**，
+ * 注册上链后调用必然 5xx。demo pack 是唯一端到端可调用的链路。
+ */
+const DEMO_5_HARDCODED = [
+  {
+    source: "demo-server",
+    id: "paper-summary",
+    name: "Paper Summary",
+    cmd: "paper-summary",
+    cmdPath: "packages/pneuma-claude-skills (port 3101)",
+    category: "research",
+    description: "Summarize academic papers — extract abstract, contributions, methods, results. Powered by local Claude CLI.",
+    suggestedPriceUsdc: 0.1,
+  },
+  {
+    source: "demo-server",
+    id: "code-review",
+    name: "Code Review",
+    cmd: "code-review",
+    cmdPath: "packages/pneuma-claude-skills (port 3102)",
+    category: "engineering",
+    description: "Review code diffs for bugs, security issues, style violations. Powered by local Claude CLI.",
+    suggestedPriceUsdc: 0.15,
+  },
+  {
+    source: "demo-server",
+    id: "block-explainer",
+    name: "Block Explainer",
+    cmd: "block-explainer",
+    cmdPath: "packages/pneuma-claude-skills (port 3103)",
+    category: "blockchain",
+    description: "Explain on-chain transactions, decode contract calls, summarize wallet activity. Powered by local Claude CLI.",
+    suggestedPriceUsdc: 0.2,
+  },
+  {
+    source: "demo-server",
+    id: "creative-write",
+    name: "Creative Write",
+    cmd: "creative-write",
+    cmdPath: "packages/pneuma-claude-skills (port 3104)",
+    category: "creative",
+    description: "Write blog posts, ad copy, story snippets to brief. Powered by local Claude CLI.",
+    suggestedPriceUsdc: 0.05,
+  },
+  {
+    source: "demo-server",
+    id: "quick-reasoning",
+    name: "Quick Reasoning",
+    cmd: "quick-reasoning",
+    cmdPath: "packages/pneuma-claude-skills (port 3105)",
+    category: "general",
+    description: "Fast Q&A reasoning — short questions, structured short answers. Powered by local Claude CLI.",
+    suggestedPriceUsdc: 0.03,
+  },
+];
+
 const PRESET_PACKS = {
-  quickstart: {
-    title: "Quickstart Pack — 5 个最戳 demo 的 Claude skill",
+  demo: {
+    title: "Demo Pack — 5 个真服务可调用的 Claude skill",
     blurb:
-      "新人 onboard 默认推荐：5 类 Claude Code 衍生 skill，覆盖 engineering / creative / research / blockchain / general。零思考，立刻有 5 个 listing。",
+      "**唯一端到端可调用**的 pack：5 个 demo server 跑在 packages/pneuma-claude-skills/ 上，端口 3101-3105。配 `pnpm tunnels:up` 起 cloudflared，再 register-skills.mjs --pack=demo --tunnels-json=... 5/5 命中。其他 pack 都是 listing-only（无 HTTP server，placeholder URL 上链）。",
+    hardcoded: DEMO_5_HARDCODED,
+  },
+  quickstart: {
+    title: "Quickstart Pack — 5 个 listing-only Claude candidate（占位 listing 模式）",
+    blurb:
+      `⚠ listing-only：用户机器扫到的 5 个 metadata（subagent / PATH binary / skill md），有 candidate 但**没有对应 HTTP server**。注册上链后链下端口需自己起 adapter，否则调用 5xx。新人想真跑 demo 用 --pack=demo，想要"我机器上也有这能力"占位 listing 才用 quickstart。`,
     explicit: [
       "claude-cli",
       "agent-code-reviewer",
@@ -481,7 +554,11 @@ if (ARG_PACK) {
     process.exit(1);
   }
   let picked;
-  if (pack.explicit) {
+  if (pack.hardcoded) {
+    // demo pack 这种"跟外部 server 进程 100% 对齐"的 pack —— 不扫机器，直接返回 hardcoded
+    // 这是**唯一**绕开本机 detect 的路径，因为 demo server id 不在任何扫描源里
+    picked = pack.hardcoded;
+  } else if (pack.explicit) {
     const want = new Set(pack.explicit);
     picked = allCandidates.filter((c) => want.has(c.id));
     // 报告 explicit pack 里有哪些 id 本机没装

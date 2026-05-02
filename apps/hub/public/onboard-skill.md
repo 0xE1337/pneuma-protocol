@@ -113,13 +113,19 @@ After the wallet is set, verify:
 pneuma keys list
 ```
 
-Should show a row marked `●` (active). If pneuma CLI isn't installed yet, instruct:
+Should show a row marked `●` (active). If `pneuma` CLI isn't on PATH, run it from the cloned repo (no global install needed — pnpm 9 dropped reliable global linking on most setups):
 
 ```bash
-npm install -g @pneuma/cli
+# From repo root, after `pnpm install`:
+node packages/cli/dist/cli.js keys list
+# → equivalent to `pneuma keys list`. Alias if you want:
+#   alias pneuma="node $PWD/packages/cli/dist/cli.js"
+
+# Or via pnpm script (works from any subdir):
+pnpm --filter @pneuma/cli exec node dist/cli.js keys list
 ```
 
-(Don't proceed past this step until `pneuma keys list` shows the active wallet.)
+(Don't proceed past this step until `keys list` shows the active wallet marked `●`.)
 
 ### Step 3 — Mint a Soul NFT (identity + TBA wallet)
 
@@ -153,15 +159,63 @@ pneuma soul status
 
 You have 261 candidates from Step 1. **Do NOT make the user tick boxes one-by-one.** Use one of these 5 modes instead — pick the one that matches what the user said.
 
-#### Mode A — Quickstart Pack (default for new users)
+> ## ⚠⚠⚠ READ THIS BEFORE `--execute` — endpoint is IMMUTABLE
+>
+> `SkillRegistry.registerSkill(...)` writes the `endpoint` URL on-chain **permanently**. The contract has `updateSkill(price, active)` but **no `updateEndpoint`**. If the URL you register is wrong (placeholder, dead tunnel, typo), that listing's calls will return 5xx **forever**. The only fix is to deactivate the broken listing and register a brand-new one — wasting gas + leaving a tombstone.
+>
+> **Two endpoint paths exist, they are NOT interchangeable**:
+>
+> | Path | What it does | When to use |
+> |---|---|---|
+> | **`--pack=demo` + `pnpm tunnels:up` + `--tunnels-json=...`** | Registers the 5 hardcoded demo servers (paper-summary / code-review / block-explainer / creative-write / quick-reasoning) that ship with this repo, exposed via cloudflared trycloudflare URLs. **5/5 endpoint match. Calls actually work end-to-end.** | User wants a real working seller setup they can demo to friends / juries. |
+> | **`--pack=quickstart` (or any goal pack) + `--allow-placeholder`** | Registers 5 candidates *detected on the user's machine* (subagent / PATH binary / skill md). These have **no HTTP server attached** → endpoint defaults to `https://placeholder.invalid/<id>` → **calls return 5xx forever unless user later builds their own adapter server + re-registers a new listing**. | User just wants on-chain listings to claim "I have these capabilities", knows servers aren't running, will adapter-up later. |
+>
+> The two paths register **different IDs** (zero overlap by design): demo pack is `packages/pneuma-claude-skills/` server processes; quickstart pack is metadata scanned from the user's `~/.claude/`. **Do NOT mix `--pack=quickstart` with `--tunnels-json=`** — every quickstart ID falls through to placeholder URL because tunnels.json only has demo IDs.
+>
+> Default recommendation: **demo pack** for first-time onboarding. Only fall back to quickstart/goal packs when the user explicitly says they understand the listing-only tradeoff.
 
-Best for: *"I just want to get started, give me defaults"*
+#### Mode A — Demo Pack (default — only end-to-end working path)
+
+Best for: *"I want a real seller setup that actually serves calls"*
+
+```bash
+# 1. Start the 5 local demo servers (each on its own port 3101-3105)
+cd packages/pneuma-claude-skills && pnpm start:all
+
+# 2. In another terminal, expose them via cloudflared quick tunnels
+cd packages/pneuma-claude-skills && pnpm tunnels:up
+#   → writes packages/pneuma-claude-skills/.tunnels.json once 5/5 URLs captured
+#   → leave this process running for the duration of the demo
+
+# 3. In a third terminal, dry-run the registration plan
+node scripts/register-skills.mjs --pack=demo \
+  --tunnels-json=packages/pneuma-claude-skills/.tunnels.json
+
+# 4. Confirm endpointSource: "tunnels-json" in output. If 5/5 candidates show
+#    real https://*.trycloudflare.com URLs (not placeholder.invalid), execute:
+node scripts/register-skills.mjs --pack=demo \
+  --tunnels-json=packages/pneuma-claude-skills/.tunnels.json --execute
+```
+
+Total ~$0.53 USDC revenue per full sweep. **Calls work end-to-end** — invoke any skill via `/api/orchestrate` or directly hit the trycloudflare URL.
+
+#### Mode A2 — Quickstart Pack (listing-only — explicit opt-in required)
+
+Best for: *"I just want my machine's capabilities listed on-chain, I'll build serving later"*
 
 ```bash
 node scripts/register-skills.mjs --pack=quickstart
+# → dry-run: shows endpointSource: "placeholder" warning
+
+node scripts/register-skills.mjs --pack=quickstart --execute
+# → REFUSED with exit code 3 — placeholder + execute is fail-closed by default
+
+node scripts/register-skills.mjs --pack=quickstart --execute --allow-placeholder
+# → only this command actually broadcasts tx with placeholder URLs
+#   user must explicitly opt in to "yes I know calls will 5xx forever"
 ```
 
-This selects 5 high-signal candidates (architect / code-reviewer / article-writing / deep-research / claude-cli) totaling ~$0.63 USDC per full sweep. Show the dry-run plan to the user, then add `--execute` once they confirm.
+This selects 5 candidates from `~/.claude/`/PATH (architect / code-reviewer / article-writing / deep-research / claude-cli) totaling ~$0.63 USDC per full sweep. **Endpoints are placeholder.invalid** — calls fail until user builds an adapter server and re-registers (since endpoint is immutable).
 
 #### Mode B — Goal-driven Pack
 

@@ -52,6 +52,10 @@ const ARG_ENDPOINT_TPL = (process.argv.find((a) => a.startsWith("--endpoint=")) 
 const ARG_TUNNELS = (process.argv.find((a) => a.startsWith("--tunnels-json=")) || "").slice(15);
 const ARG_KEY_LABEL = (process.argv.find((a) => a.startsWith("--key=")) || "").slice(6);
 const ARG_JSON = process.argv.includes("--json");
+// 默认：placeholder URL 不允许 --execute（防止用户无意识烧 gas 写废 endpoint）。
+// 只在用户明确知道在干什么（占位 listing 或测试链）时显式开启。
+// 颗粒度对齐：endpoint 上链后 immutable，写错 = 永久 listing 污点 + gas 浪费。
+const ARG_ALLOW_PLACEHOLDER = process.argv.includes("--allow-placeholder");
 
 if (!ARG_PACK && !ARG_IDS) {
   console.error("usage: register-skills.mjs --pack=<name> | --ids=a,b,c [--execute]");
@@ -266,11 +270,33 @@ if (candidates.length === 0) {
 const plan = buildPlan(candidates);
 const totalPrice = plan.reduce((s, p) => s + p.priceUsdc, 0);
 
+// Endpoint source 决定结果可调用性：
+//   tunnels-json     → 有真服务器 + 公网 URL，5/5 命中即调用通
+//   endpoint-template → 用户自己保证 URL 起来了
+//   placeholder      → placeholder.invalid，**注册上链后调用永远 5xx**
+// fail-closed：默认禁止用 placeholder 上链；用户必须显式 --allow-placeholder
+const isPlaceholderEndpoint = !tunnels && !ARG_ENDPOINT_TPL;
+
 let executions = null;
 if (ARG_EXECUTE) {
   if (blockers.length > 0) {
     console.log(JSON.stringify({ ok: false, blockers }, null, 2));
     process.exit(1);
+  }
+  if (isPlaceholderEndpoint && !ARG_ALLOW_PLACEHOLDER) {
+    const refusal = {
+      ok: false,
+      refused: "placeholder-endpoint-without-explicit-opt-in",
+      reason:
+        "endpoint will resolve to https://placeholder.invalid/<id> for every skill, " +
+        "which means calls will fail forever after registration (SkillRegistry has no updateEndpoint). " +
+        "Either: (a) `pnpm tunnels:up` first then re-run with --tunnels-json=packages/pneuma-claude-skills/.tunnels.json, " +
+        "(b) pass --endpoint='https://your.domain/<id>' to use your own URL template, " +
+        "or (c) if you really want listing-only placeholder rows on-chain, re-run with --allow-placeholder.",
+      planPreview: plan.map((p) => ({ id: p.candidateId, endpoint: p.endpoint })),
+    };
+    console.log(JSON.stringify(refusal, null, 2));
+    process.exit(3);
   }
   executions = plan.map((p) => {
     process.stderr.write(`[register-skills] ▶ step ${p.step}/${plan.length}: ${p.candidateId} → ${p.endpoint}\n`);
