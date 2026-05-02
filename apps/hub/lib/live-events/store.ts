@@ -12,9 +12,15 @@
  *   - ReputationGraph: Endorsed
  *
  * 边累加规则（用于 React Flow 显示 caller→provider 关系）：
- *   - CallSettled (调 skill 完成结算) → 累加 fromAgent → toAgent
+ *   - CallEscrowed (caller 押金) → 立刻累加 caller → provider，让 caller 节点
+ *     在 settle 之前就出现（之前只在 CallSettled 时累加，导致 escrow-pending
+ *     的 caller 不显示节点）
+ *   - CallSettled (调 skill 完成结算) → 再累加一次（callCount+1, paidAmount）
  *   - Endorsed (担保) → 累加 endorser → endorsee
  *   - 其他事件不进 graph 边（publish/cite 走单独 panel）
+ *
+ * 同一 caller→provider 的 escrow + settle 都会 upsert 同一边，但 settle 时
+ * 才有真实 paidAmount；escrow 阶段只刷新 lastActiveAt，不重复 callCount。
  */
 
 import { create } from "zustand";
@@ -108,19 +114,12 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
 
     let edges = state.edges;
 
-    // 边累加：CallSettled / Endorsed
-    if (evt.kind === "call_settled") {
-      const caller = evt.args.caller as Address | undefined;
-      const provider = evt.args.skillOwner as Address | undefined;
-      const amount = (evt.args.paidAmount as bigint | undefined) ?? 0n;
-      if (caller && provider && caller !== provider) {
-        edges = upsertEdge(edges, caller, provider, {
-          callDelta: 1,
-          amountDelta: amount,
-          endorseDelta: 0,
-        });
-      }
-    } else if (evt.kind === "endorsed") {
+    // 边累加：Endorsed（直接 args 完整可用）
+    // 注意：CallEscrowed / CallSettled 的 ABI 不带 skillOwner，需要查找表才能
+    // 合成 caller→provider 边，因此那两类边由 NetworkGraphPanel 在拿到 skills
+    // listActiveSkills 之后通过 skillId → owner 映射在组件内合成（参见
+    // dashboard/page.tsx NetworkGraphPanel.agents/edges useMemo）。
+    if (evt.kind === "endorsed") {
       const endorser = evt.args.endorser as Address | undefined;
       const endorsee = evt.args.endorsee as Address | undefined;
       const stake = (evt.args.stake as bigint | undefined) ?? 0n;

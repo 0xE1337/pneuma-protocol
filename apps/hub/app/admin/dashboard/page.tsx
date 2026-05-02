@@ -47,6 +47,7 @@ import {
   useLiveStore,
   selectCommentEvents,
   type LiveEvent,
+  type LiveEdge,
 } from "@/lib/live-events/store";
 import {
   useLiveSubscriptions,
@@ -335,9 +336,71 @@ function NetworkGraphPanel() {
     query: { refetchInterval: 8000 },
   });
 
-  const edgesMap = useLiveStore((s) => s.edges);
+  const storeEdges = useLiveStore((s) => s.edges);
+  const events = useLiveStore((s) => s.events);
 
-  // 节点 = listActiveSkills 的 unique owners（provider）∪ store.edges 出现的 from/to（含纯 caller）
+  // skillId → owner 查找表（CallEscrowed/CallSettled 事件不带 skillOwner，
+  // 必须靠 listActiveSkills 拿到的 skills 才能合成 caller→provider 边）
+  const skillIdToOwner = useMemo(() => {
+    const map = new Map<string, Address>();
+    if (skills) {
+      for (const s of skills) {
+        map.set(s.skillId.toString(), s.owner);
+      }
+    }
+    return map;
+  }, [skills]);
+
+  // 从 events 合成 call-related 边（caller → provider）。
+  // 之前 store 直接 upsert 是死代码（CallSettled / CallEscrowed 的 ABI 没
+  // skillOwner 字段），现在改成在组件内按 skillId 查表合成，保留 30 分钟
+  // lastActiveAt 而不是固定 2 分钟（让 backfill 拉到的历史调用也显示边）。
+  const callEdges = useMemo(() => {
+    const map = new Map<string, LiveEdge>();
+    const HISTORY_EDGE_TTL_MS = 30 * 60 * 1000; // 30 分钟内的事件计入活动边
+    const now = Date.now();
+    for (const e of events) {
+      if (e.kind !== "call_escrowed" && e.kind !== "call_settled") continue;
+      const caller = e.args.caller as Address | undefined;
+      const skillId = (e.args.skillId as bigint | undefined)?.toString();
+      if (!caller || !skillId) continue;
+      const provider = skillIdToOwner.get(skillId);
+      if (!provider || caller === provider) continue;
+      const key = `${caller.toLowerCase()}->${provider.toLowerCase()}`;
+      const existing = map.get(key);
+      const isSettled = e.kind === "call_settled";
+      const amount = isSettled
+        ? ((e.args.paidAmount as bigint | undefined) ?? 0n)
+        : 0n;
+      if (existing) {
+        existing.callCount += isSettled ? 1 : 0;
+        existing.totalAmount += amount;
+        existing.lastActiveAt = Math.max(existing.lastActiveAt, e.receivedAt);
+      } else {
+        map.set(key, {
+          key,
+          fromAgent: caller,
+          toAgent: provider,
+          callCount: isSettled ? 1 : 0,
+          totalAmount: amount,
+          endorseCount: 0,
+          lastActiveAt: e.receivedAt,
+        });
+      }
+    }
+    // 过滤太老的（30 分钟外）
+    for (const [k, v] of map) {
+      if (now - v.lastActiveAt > HISTORY_EDGE_TTL_MS) map.delete(k);
+    }
+    return map;
+  }, [events, skillIdToOwner]);
+
+  // 合并：endorse 边（store.edges）+ call 边（合成）
+  const edgesMap = useMemo(() => {
+    return { ...storeEdges, ...Object.fromEntries(callEdges) };
+  }, [storeEdges, callEdges]);
+
+  // 节点 = listActiveSkills 的 unique owners（provider）∪ edgesMap 出现的 from/to（含纯 caller）
   // 这样 caller-only agent（没注册 skill 但发过调用）也会作为节点出现，
   // 避免 React Flow 的 source-not-in-nodes 错位
   const agents: AgentInfo[] = useMemo(() => {
@@ -364,7 +427,7 @@ function NetworkGraphPanel() {
       }
     }
 
-    // 第二轮：store.edges 里的 caller / provider 地址，没出现过的补上 caller-only 节点
+    // 第二轮：edgesMap 里的 caller / provider 地址，没出现过的补上 caller-only 节点
     for (const e of Object.values(edgesMap)) {
       const fromKey = e.fromAgent.toLowerCase();
       if (!map.has(fromKey)) {
@@ -419,10 +482,14 @@ function NetworkGraphPanel() {
   const now = Date.now();
   const edges: Edge[] = useMemo(() => {
     const list: Edge[] = [];
+    // edgesMap 已经包含了 backfill 拉到的 30 分钟内的 call 边 + endorse 边；
+    // 渲染层这里的窗口宽到 30 分钟 + 长 backfill 历史也都展示，让评委一眼看到
+    // 完整 caller↔provider 互调网络（不再是只显示最近 2 分钟新事件）
+    const RENDER_TTL_S = 30 * 60;
     for (const e of Object.values(edgesMap)) {
       const age = (now - e.lastActiveAt) / 1000;
-      if (age > 120) continue; // 2 min 后从图上消失
-      const opacity = Math.max(0.25, 1 - age / 120);
+      if (age > RENDER_TTL_S) continue;
+      const opacity = Math.max(0.2, 1 - age / RENDER_TTL_S);
       const width = Math.min(8, 1 + Math.log2(e.callCount + e.endorseCount + 1) * 1.5);
       list.push({
         id: e.key,
@@ -452,7 +519,7 @@ function NetworkGraphPanel() {
           Agent 互调网络 · {nodes.length} on-chain
         </h3>
         <span className="text-[10px] font-mono text-ink-faint">
-          {edges.length} active edges (CallSettled + Endorsed, 2min window)
+          {edges.length} active edges (Call + Endorse, 30min window)
         </span>
       </div>
       <div style={{ height: "calc(100% - 28px)" }}>
