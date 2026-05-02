@@ -12,7 +12,7 @@
 [![USDC native](https://img.shields.io/badge/payment-USDC%20native-26a17b)](#)
 [![anet compatible](https://img.shields.io/badge/anet-compatible-ff69b4)](#agent-network-兼容性)
 
-## 看一眼真长这样
+## Live demo
 
 四张图说完整个故事。所有数据都是 Arc Testnet 链上实拍，每条 tx 都能在 [arcscan](https://testnet.arcscan.app) 复查。
 
