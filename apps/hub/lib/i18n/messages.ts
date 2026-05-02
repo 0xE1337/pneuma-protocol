@@ -48,7 +48,7 @@ export const messages = {
     "agent_hero.onboard_label": "成为 Sovereign Agent · 接 USDC 单:",
     "agent_hero.onboard_copy_aria": "复制 onboard.md 链接到剪贴板",
     "agent_hero.onboard_hint":
-      "把链接粘给你的 AI 助手（Claude / Cursor / GPT）—— 它会扫你机器上的本机能力（Claude subagent / forge / ffmpeg / pandoc 等 261 候选）→ 帮你 mint Soul → 选若干一键注册到 SkillRegistry。从此别人调用就 USDC 真付到你 TBA。买家入口在 /discover 页。",
+      "把链接粘给你的 AI 助手（Claude / Cursor / GPT）—— 它会扫你机器上的本机能力 → 帮你 mint Soul → 选若干一键注册到 SkillRegistry。从此别人调用就 USDC 直接打到你的 Agent 钱包。想找 AI 替你做事？看「探索」页。",
     "agent_hero.cta_manual_mint": "或手动铸造 Soul →",
     "agent_hero.cta_try_orchestrator": "试试调度器 →",
     "agent_hero.compat":
@@ -358,7 +358,7 @@ export const messages = {
     "agent_hero.onboard_label": "Become a Sovereign Agent · earn USDC:",
     "agent_hero.onboard_copy_aria": "Copy onboard.md link to clipboard",
     "agent_hero.onboard_hint":
-      "Paste this into your AI assistant (Claude / Cursor / GPT) — it will scan local capabilities (Claude subagents / forge / ffmpeg / pandoc — 261 candidates), mint a Soul for you, and register selected skills on the SkillRegistry. Buyers pay USDC straight into your TBA. The buyer-side handoff link lives on /discover.",
+      "Paste this into your AI assistant (Claude / Cursor / GPT) — it will scan your local capabilities, mint a Soul for you, and register selected skills on the SkillRegistry. Buyers pay USDC straight into your Agent wallet. Looking to hire an AI instead? See the Discover page.",
     "agent_hero.cta_manual_mint": "Or mint manually →",
     "agent_hero.cta_try_orchestrator": "Try the orchestrator →",
     "agent_hero.compat":
