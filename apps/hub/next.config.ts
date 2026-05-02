@@ -33,6 +33,8 @@ const config: NextConfig = {
       { source: "/agent.md", destination: "/agent-skill.md" },
       // Same for the deploy skill (AI deploys its own Pneuma hub to Vercel).
       { source: "/deploy.md", destination: "/vercel-deploy-skill.md" },
+      // Producer-side onboarding: AI walks user through detect → wallet → mint → register.
+      { source: "/onboard.md", destination: "/onboard-skill.md" },
       {
         source: "/.well-known/agent.json",
         destination: "/api/well-known/agent-json",
