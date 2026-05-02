@@ -454,7 +454,7 @@ roleWeight   = { PROVIDER: 1.0, CALLER: 1.5, JUROR: 2.0, SYSTEM: 0 }
 - **实现**（`contracts/src/PneumaCourt.sol` + `contracts/src/SkillRegistry.sol` 钩子 + `contracts/test/PneumaCourt.t.sol`）：~340 行核心合约，21 测试，详细设计在合约源码 docstring 与测试套件
 - **Roadmap**：v0.1 代码 + 测试 ready，链上部署留下个 sprint（避免破坏当前 demo 链上 state）；v1.0 commit-reveal + sortition + 上诉跟进后续
 
-## 七个爆点（评委 30 秒能 get）
+## 7 项核心特性
 
 | 爆点 | 实现 |
 |---|---|
