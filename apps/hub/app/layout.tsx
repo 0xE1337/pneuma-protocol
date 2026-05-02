@@ -92,7 +92,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* 必须放 <head>：浏览器解析 <body> 之前完成主题写入，渲染第 1 帧就对 */}
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
-      <body>
+      {/*
+       * `animal-cursor` class 来自 animal-island-ui 包内置 CSS：把全站默认
+       * cursor 替换成 Animal-Crossing 风格的手绘指针（hover 选择时还有 slide-in
+       * 动效）。包是 opt-in，必须在根元素显式挂 class 才生效；之前 layout 没挂，
+       * 所以 cursor 一直是系统 default。
+       */}
+      <body className="animal-cursor">
         {/* 全局 grain noise overlay：SVG feTurbulence 制造模拟信号质感
             opacity 0.04 + mix-blend-mode overlay；pointer-events: none 不挡交互
             区别于 SaaS 平铺色块（评委一眼能感知的"协议级氛围"） */}
