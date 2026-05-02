@@ -189,13 +189,74 @@ interface PlanOnlyResponse {
  *   AgentSkillCTA—— 让 AI agent 在用户对话流里自动 dispatch（不离开 ChatGPT/Claude）
  */
 function AgentSkillCTA() {
+  return (
+    <div className="space-y-3">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-mono">
+        让你的 AI 接入 Pneuma — 选一边贴
+      </div>
+      <div className="grid md:grid-cols-2 gap-3">
+        <SkillManifestChip
+          mode="buyer"
+          accent="cyan"
+          icon="🛒"
+          title="作为买家：派单给 marketplace"
+          slug="/agent.md"
+          intent={
+            <>
+              你已有 AI 助手（Claude / Cursor / GPT），它接到「审合约 / 写文案 / 解释 tx」
+              这种**它自己干不好**的专项任务时，自动到 Pneuma 上**雇用别人**——选
+              sovereign agent、付 USDC、带结果回来。
+              <br />
+              <span className="text-ink-faint">
+                你 = 雇主。卖家 = 链上其他 agent。
+              </span>
+            </>
+          }
+        />
+        <SkillManifestChip
+          mode="seller"
+          accent="magenta"
+          icon="🏷"
+          title="作为卖家：把自己注册成 sovereign agent"
+          slug="/onboard.md"
+          intent={
+            <>
+              你电脑上有 claude / forge / ffmpeg 之类的本机能力？粘进 AI 助手，它会
+              扫你机器上 261 候选 → 帮你 mint Soul → 选 5 个一键注册到 SkillRegistry。
+              别人调用就 USDC 真付到你 TBA。
+              <br />
+              <span className="text-ink-faint">
+                你 = 卖家。买家 = 任何人。
+              </span>
+            </>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function SkillManifestChip({
+  mode,
+  accent,
+  icon,
+  title,
+  slug,
+  intent,
+}: {
+  mode: "buyer" | "seller";
+  accent: "cyan" | "magenta";
+  icon: string;
+  title: string;
+  slug: string;
+  intent: React.ReactNode;
+}) {
   const [copied, setCopied] = useState(false);
   const url =
     typeof window !== "undefined"
-      ? `${window.location.origin}/agent.md`
-      : "https://pneuma-hub.vercel.app/agent.md";
+      ? `${window.location.origin}${slug}`
+      : `https://pneuma-hub.vercel.app${slug}`;
   const display = url.replace(/^https?:\/\//, "");
-
   async function onCopy() {
     try {
       await navigator.clipboard.writeText(url);
@@ -205,22 +266,36 @@ function AgentSkillCTA() {
       // 旧浏览器静默降级
     }
   }
-
+  // 用 string lookup 让 tailwind 不被 dynamic class 吃掉（accent="cyan"/"magenta" 走 known utility names）
+  const tone =
+    accent === "cyan"
+      ? {
+          border: "border-cyan/30",
+          bg: "bg-cyan/5",
+          fg: "text-cyan",
+          fgSoft: "text-cyan/70",
+          btnIdle: "bg-cyan/15 hover:bg-cyan/25",
+          btnDone: "bg-cyan/30",
+        }
+      : {
+          border: "border-magenta/30",
+          bg: "bg-magenta/5",
+          fg: "text-magenta",
+          fgSoft: "text-magenta/70",
+          btnIdle: "bg-magenta/15 hover:bg-magenta/25",
+          btnDone: "bg-magenta/30",
+        };
   return (
-    <div className="rounded-lg border border-cyan/30 bg-cyan/5 p-5 space-y-3">
+    <div className={`rounded-lg border ${tone.border} ${tone.bg} p-5 space-y-3 flex flex-col`}>
       <div className="flex items-baseline gap-2 flex-wrap">
-        <span className="text-cyan font-semibold text-sm">
-          🤖 让你的 AI 替你 Discover
+        <span className={`${tone.fg} font-semibold text-sm`}>
+          {icon} {title}
         </span>
-        <span className="text-[11px] uppercase tracking-[0.18em] text-cyan/70 font-mono">
-          Skill manifest · zero install
+        <span className={`text-[10px] uppercase tracking-[0.18em] ${tone.fgSoft} font-mono`}>
+          {mode}
         </span>
       </div>
-      <p className="text-[13px] text-ink-dim leading-relaxed">
-        已经有 AI 助手（Claude / Cursor / GPT / OpenClaw）？复制这个链接粘进去——
-        以后你跟它说"帮我审合约"或"写一句 slogan"，它会自动来 Pneuma marketplace
-        按声誉 / 价格选 sovereign agent，真付 USDC，把结果带回给你。
-      </p>
+      <p className="text-[13px] text-ink-dim leading-relaxed flex-1">{intent}</p>
       <div className="flex flex-col sm:flex-row items-stretch gap-2">
         <code className="font-mono text-[12px] md:text-[13px] text-ink truncate flex-1 px-3 py-2 rounded bg-bg border border-border text-left">
           {display}
@@ -229,24 +304,17 @@ function AgentSkillCTA() {
           type="button"
           onClick={onCopy}
           className={`shrink-0 px-4 py-2 rounded font-mono text-[11px] uppercase tracking-wide transition-colors ${
-            copied
-              ? "bg-cyan/30 text-cyan"
-              : "bg-cyan/15 text-cyan hover:bg-cyan/25"
+            copied ? `${tone.btnDone} ${tone.fg}` : `${tone.btnIdle} ${tone.fg}`
           }`}
-          aria-label="复制 agent.md 链接到剪贴板"
+          aria-label={`复制 ${slug} 链接到剪贴板`}
         >
           {copied ? "已复制 ✓" : "复制"}
         </button>
       </div>
       <p className="text-[11px] text-ink-faint font-mono">
         看 manifest 全文 →{" "}
-        <a
-          href="/agent.md"
-          target="_blank"
-          rel="noreferrer"
-          className="text-cyan hover:underline"
-        >
-          /agent.md
+        <a href={slug} target="_blank" rel="noreferrer" className={`${tone.fg} hover:underline`}>
+          {slug}
         </a>
       </p>
     </div>
