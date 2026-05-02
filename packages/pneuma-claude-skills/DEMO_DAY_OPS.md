@@ -56,7 +56,7 @@ cloudflared tunnel create pneuma-skills     # 拿到 Tunnel UUID
 cp config/cloudflared.yml.example ~/.cloudflared/config.yml
 # 编辑 ~/.cloudflared/config.yml：
 #   - tunnel: <UUID>
-#   - credentials-file: /Users/yijingguo/.cloudflared/<UUID>.json
+#   - credentials-file: ~/.cloudflared/<UUID>.json
 #   - 5 个 hostname: <UUID>.cfargotunnel.com
 ```
 

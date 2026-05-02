@@ -512,7 +512,7 @@ cd packages/skill-firewall && pnpm test
 # 期望: 4 个 rule 各 5+ 测试通过
 
 # 服务层
-cd /Users/yijingguo/code/pneuma-protocol
+cd /path/to/pneuma-protocol
 pnpm exec tsc --noEmit  # 全部 package
 # 期望: 0 error
 

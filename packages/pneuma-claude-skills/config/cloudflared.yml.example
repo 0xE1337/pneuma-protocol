@@ -29,7 +29,7 @@
 # ─────────────────────────────────────────────────────────────────
 
 tunnel: <YOUR_TUNNEL_UUID>
-credentials-file: /Users/yijingguo/.cloudflared/<YOUR_TUNNEL_UUID>.json
+credentials-file: ~/.cloudflared/<YOUR_TUNNEL_UUID>.json
 
 # Path-based 路由：同一 host 的不同 path 映射到不同本地端口
 # 这样链上注册的 endpoint 是 https://<host>/<skill-id>/api/run

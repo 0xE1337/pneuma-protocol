@@ -85,7 +85,7 @@ cp config/cloudflared.yml.example ~/.cloudflared/config.yml
 
 ```yaml
 tunnel: <YOUR_TUNNEL_UUID>           # 替换为 step 3 的 UUID
-credentials-file: /Users/yijingguo/.cloudflared/<YOUR_TUNNEL_UUID>.json
+credentials-file: ~/.cloudflared/<YOUR_TUNNEL_UUID>.json
                                      #                ↑ 同上 UUID
 
 ingress:

@@ -21,7 +21,7 @@
 ### Step 1. 推代码到 GitHub
 
 ```bash
-cd /Users/yijingguo/code/pneuma-protocol
+cd /path/to/pneuma-protocol
 git push origin main
 ```
 
@@ -94,7 +94,7 @@ git push origin main
 ### Step 2. 在仓库根跑 deploy
 
 ```bash
-cd /Users/yijingguo/code/pneuma-protocol/apps/hub
+cd /path/to/pneuma-protocol/apps/hub
 
 # Link to a new project
 VERCEL_TOKEN=<your-token> vercel link --yes --project pneuma-hub
