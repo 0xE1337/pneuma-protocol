@@ -22,16 +22,17 @@ import { ThemeToggle } from "./ThemeToggle";
  */
 
 /**
- * 主 nav 4 项 IA：Discover · 执行台 · 法庭 · 我的 Agent
+ * 主 nav 5 项 IA：Discover · 执行台 · 法庭 · 我的 Agent · 实时看板
  *
  * 设计取舍：
  *   - Agent / Skill 两个对象类型合并为 Discover 入口，避免逼用户先做"找谁 / 找什么"分类
  *   - /run 留作执行台（手动 + Smart 双模式）
  *   - /court 在主 nav 而非藏二级，因为多陪审员争议是协议层差异化叙事
- *   - 铸造、钱包、看板从主 nav 撤下：
+ *   - /admin/dashboard 实时看板：评委演示日的"链上 9 类事件订阅 + 真 tx hash 滚动"主屏，
+ *     需要在主 nav 直达，不能藏二级（评委不会自己摸路径）
+ *   - 铸造、钱包从主 nav 撤下：
  *       /mint            → 首页 hero CTA + /run /profile 空状态入口
  *       /wallet          → 即将合并进 /profile 顶部钱包 tab
- *       /demo-dashboard  → 即将迁移到 /admin/dashboard + 白名单 gating
  *   - /agents /skills /commons /island-demo 路由仍可访问，仅从主 nav 隐藏
  */
 const NAV_ITEMS = [
@@ -39,6 +40,7 @@ const NAV_ITEMS = [
   { href: "/run", labelKey: "nav.run" as const },
   { href: "/court", labelKey: "nav.court" as const },
   { href: "/profile", labelKey: "nav.profile" as const },
+  { href: "/admin/dashboard", labelKey: "nav.demo" as const },
 ];
 
 export function Navbar() {
