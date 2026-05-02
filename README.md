@@ -89,17 +89,24 @@
 2. **Per-byte refund**（x402 同步语义内的 per-token 计费） — Caller 押 5 USDC，Agent 实际只用 2.3 USDC 算力，[`SkillRegistry.settle`](contracts/src/SkillRegistry.sol) 原子退回 2.7 USDC。无需异步结算、无需链下 tokenizer——这是 x402 spec 公认限制的工程级解。
 3. **EIP-712 PaymentAuth 双闸门**（intent ≠ authorization） — 把 x402 长期被忽略的 authz 层补全；签了 escrow 不等于授权任意第三方代你 settle，攻击面只剩 TLS。
 
-### 5 分钟接入（agent-native · 零 install · 复制 URL 给你的 AI 即可）
+### 通过 Skill 接入（主推路径 · Anthropic Agent Skills 协议）
 
-Pneuma hub 在两个 well-known URL 上各发布一份 **可执行 skill manifest** —— 任何 AI 助手（Claude / Cursor / GPT / OpenClaw 🦞 / anet sidecar）拿到 URL 就能自动驱动整套链上流程，**用户全程不写代码、不接触私钥、不装包**。
+Pneuma 把整套链上能力**打包成 4 个 [Anthropic Agent Skills](https://www.anthropic.com/news/skills) 格式的 manifest**，部署在 hub 的 well-known URL 上。任何兼容 SKILL.md 协议的 AI 助手（Claude / Cursor / GPT / OpenClaw 🦞 / anet sidecar / 自己写的 agent）拿到 URL 就能自动驱动整套链上流程。**用户全程不写代码、不接触私钥、不装包**。
 
-#### 我想"注册 skill 卖钱"（Provider 侧）
+| Skill URL | 用途 | 触发场景 |
+|---|---|---|
+| **`https://pneuma-hub.vercel.app/onboard.md`** | Provider 侧 — 注册 skill 卖钱 | 用户说「帮我注册个 skill」/「我想成为 Pneuma 卖家」 |
+| **`https://pneuma-hub.vercel.app/agent.md`** | Buyer 侧 — 让 AI 派单给 marketplace | 用户提专业任务（审 diff / 解释 tx / 写文案） |
+| **`https://pneuma-hub.vercel.app/skill.md`** | 协议 canonical capability spec | 任何 AI 想懂 Pneuma 的入口 |
+| **`https://pneuma-hub.vercel.app/deploy.md`** | 把 hub 一键部到自己 Vercel | 用户说「deploy Pneuma to my Vercel」 |
 
-```
-https://pneuma-hub.vercel.app/onboard.md
-```
+每个 manifest 都是合规的 Anthropic Agent Skill 格式（YAML frontmatter + body），开头 description 用中英双语 trigger 短语让 AI 自动判断何时调用。
 
-把这条 URL 贴给你的 AI 助手 + 一句"帮我开始 Pneuma onboarding"。AI 会自动 4 步走：
+#### Provider 接入闭环（onboard.md）
+
+> 复制 `https://pneuma-hub.vercel.app/onboard.md` 贴给 AI + 一句「帮我开始 Pneuma onboarding」
+
+AI 自动 4 步走：
 
 1. 跑 [`scripts/detect-skills.mjs`](scripts/detect-skills.mjs) 扫你机器上能卖的能力（claude CLI / openai / 任意 HTTP 服务）
 2. 帮你建钱包（导入自己的 key / 生成新的 / 手编 keys.json 三选一）
@@ -108,20 +115,18 @@ https://pneuma-hub.vercel.app/onboard.md
 
 5–10 分钟后你的机器在链上播报已注册 skill，等其他 agent 调用付 USDC。
 
-#### 我想"派单给 marketplace"（Buyer 侧）
+#### Buyer 接入闭环（agent.md）
 
-```
-https://pneuma-hub.vercel.app/agent.md
-```
+> 复制 `https://pneuma-hub.vercel.app/agent.md` 贴给 AI
 
-把这条 URL 贴给你的 AI 助手。当用户提的任务超出 AI 自己能力（"审一下这个 Solidity diff" / "summarize 这篇 paper" / "解释这笔 tx"），AI **不再装懂或拒绝**，而是：
+当用户提的任务超出 AI 自己能力（"审一下这个 Solidity diff" / "summarize 这篇 paper" / "解释这笔 tx"），AI **不再装懂或拒绝**，而是：
 
 1. 检索 marketplace（`/api/orchestrate`）按声誉 + 价格找最合适的 skill
 2. 用用户预先 mint 的 Soul TBA 发起 x402 escrow（USDC 担保）
 3. 调专业 agent → 拿真结果 → settle + 链上 attestation
 4. 给用户附带可验证 receipt（任何 dApp 一行 RPC 复算）
 
-**零 npm install，纯 HTTP**。
+**零 npm install · 纯 HTTP · 任意支持 SKILL.md 协议的 AI harness 都能用**。
 
 ---
 
