@@ -2,23 +2,42 @@
 /**
  * scripts/register-skills.mjs — batch register skills on Pneuma SkillRegistry
  *
- * 跟 detect-skills.mjs 对偶：detect 探测候选，register 真上链。
+ * v3 (truthful): uses `cast send` (foundry) to actually broadcast registerSkill
+ * tx — no fake `pneuma serve` flags, no hallucinated CLI options.
  *
- * 用法：
- *   node scripts/register-skills.mjs --pack=quickstart                     # pack-driven
+ * Why cast send not viem: zero deps. cast is in PATH (every Pneuma user already
+ * has foundry for forge tests). Avoids monorepo workspace import gymnastics.
+ *
+ * Two modes:
+ *
+ *   1. dry-run (default)
+ *      Reads candidates from detect-skills, builds the per-candidate
+ *      registerSkill argv, and prints what would happen. Does NOT touch chain.
+ *      Use this to review the action plan before paying gas.
+ *
+ *   2. --execute
+ *      Actually calls `cast send` for each candidate. Requires:
+ *        - foundry installed (cast in PATH)
+ *        - active wallet in ~/.pneuma/keys.json with a private key
+ *        - apps/hub/.env.local has the chain config + SkillRegistry address
+ *        - either --endpoint=<url-template> per skill, or
+ *          --tunnels-json=<path> to a manifest produced by `pnpm tunnels:up`
+ *          mapping candidate.id → public URL
+ *
+ * Usage:
+ *   node scripts/register-skills.mjs --pack=quickstart
+ *   node scripts/register-skills.mjs --pack=quickstart --endpoint='https://placeholder.local/<id>'
+ *   node scripts/register-skills.mjs --pack=quickstart --tunnels-json=packages/pneuma-claude-skills/.tunnels.json --execute
  *   node scripts/register-skills.mjs --ids=agent-architect,agent-code-reviewer
- *   node scripts/register-skills.mjs --pack=web3-dev --execute              # 真上链（默认 dry-run）
  *
- * 默认 dry-run，输出 machine-readable 的 action plan JSON（一组 `pneuma serve`
- * 命令），让 AI 拿到后跟用户确认再执行。这是设计上的安全防线：
- * 不让 AI 替用户偷偷上链 + 花 gas + 暴露注册元数据。
- *
- * 真要批量上链时加 --execute，脚本会逐个 spawn `pneuma serve register-only`，
- * 每个要 ~3-8s（合约 tx + confirm）。失败的会列在 result.failed 里。
+ * Endpoint URL is *immutable* in SkillRegistry — once registered the URL is
+ * locked. The contract has updateSkill(price, active) but no updateEndpoint.
+ * So if your tunnel URL changes, you must register a new skill (and optionally
+ * deactivate the old). Pick a stable URL or use a Cloudflare named tunnel.
  */
 
-import { spawnSync, execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,22 +48,19 @@ const PROTOCOL_ROOT = resolve(__dirname, "..");
 const ARG_PACK = (process.argv.find((a) => a.startsWith("--pack=")) || "").slice(7);
 const ARG_IDS = (process.argv.find((a) => a.startsWith("--ids=")) || "").slice(6);
 const ARG_EXECUTE = process.argv.includes("--execute");
+const ARG_ENDPOINT_TPL = (process.argv.find((a) => a.startsWith("--endpoint=")) || "").slice(11);
+const ARG_TUNNELS = (process.argv.find((a) => a.startsWith("--tunnels-json=")) || "").slice(15);
+const ARG_KEY_LABEL = (process.argv.find((a) => a.startsWith("--key=")) || "").slice(6);
 const ARG_JSON = process.argv.includes("--json");
-const ARG_PORT_BASE = parseInt(
-  (process.argv.find((a) => a.startsWith("--port-base=")) || "").slice(12) || "31010",
-  10
-);
 
 if (!ARG_PACK && !ARG_IDS) {
   console.error("usage: register-skills.mjs --pack=<name> | --ids=a,b,c [--execute]");
-  console.error("  list packs: node scripts/detect-skills.mjs --packs");
+  console.error("  packs: node scripts/detect-skills.mjs --packs");
   process.exit(2);
 }
 
-const log = (...a) => process.stderr.write("[register-skills] " + a.join(" ") + "\n");
-
 /* ─────────────────────────────────────────────────────────────────────
- * Pre-flight: pneuma CLI installed? wallet configured? Soul minted?
+ * Pre-flight
  * ───────────────────────────────────────────────────────────────────── */
 function which(cmd) {
   try {
@@ -54,20 +70,71 @@ function which(cmd) {
   }
 }
 
-function preflight() {
-  const checks = {
-    pneumaCli: which("pneuma"),
-    keysFile: existsSync(join(homedir(), ".pneuma", "keys.json")),
-    nodeOk: process.versions.node.split(".")[0] >= "18",
-  };
-  const blockers = [];
-  if (!checks.pneumaCli) blockers.push("Pneuma CLI not in PATH. Install: npm install -g @pneuma/cli");
-  if (!checks.keysFile) blockers.push("No ~/.pneuma/keys.json. Run: pneuma keys add -l main -k 0x... (or generate one with `cast wallet new`)");
-  return { checks, blockers };
+function loadEnv() {
+  const path = join(PROTOCOL_ROOT, "apps/hub/.env.local");
+  if (!existsSync(path)) {
+    return {};
+  }
+  const out = {};
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
+    if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "").trim();
+  }
+  return out;
+}
+
+function loadKeys() {
+  const path = join(homedir(), ".pneuma", "keys.json");
+  if (!existsSync(path)) return null;
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function loadTunnels() {
+  if (!ARG_TUNNELS) return null;
+  const path = resolve(ARG_TUNNELS);
+  if (!existsSync(path)) {
+    console.error(`[register-skills] --tunnels-json file not found: ${path}`);
+    process.exit(2);
+  }
+  return JSON.parse(readFileSync(path, "utf8"));
+}
+
+const env = loadEnv();
+const keys = loadKeys();
+const tunnels = loadTunnels();
+
+const blockers = [];
+if (!which("cast")) blockers.push("foundry `cast` not in PATH. Install: https://book.getfoundry.sh/getting-started/installation");
+if (!which("node")) blockers.push("node not in PATH (impossible since you ran this — but listed for completeness)");
+if (!keys) blockers.push("~/.pneuma/keys.json missing or invalid JSON. Run `pneuma keys add -l main -k 0x...` first.");
+if (!env.NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS) blockers.push("apps/hub/.env.local missing NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS");
+if (!env.NEXT_PUBLIC_CHAIN_RPC && !env.ARC_TESTNET_RPC_URL) blockers.push("apps/hub/.env.local missing chain RPC (NEXT_PUBLIC_CHAIN_RPC or ARC_TESTNET_RPC_URL)");
+
+const RPC = env.ARC_TESTNET_RPC_URL || env.NEXT_PUBLIC_CHAIN_RPC || "https://rpc.testnet.arc.network";
+const REG = env.NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS;
+
+/* Resolve active wallet */
+let activeKey = null;
+let activeAddress = null;
+let activeLabel = null;
+if (keys) {
+  const label = ARG_KEY_LABEL || keys.active;
+  const entry = (keys.entries || []).find((e) => e.label === label);
+  if (entry) {
+    activeKey = entry.privateKey;
+    activeAddress = entry.address;
+    activeLabel = entry.label;
+  } else if (label) {
+    blockers.push(`wallet label "${label}" not found in keys.json. Available: ${(keys.entries || []).map((e) => e.label).join(", ")}`);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────
- * Get candidates from detect-skills.mjs
+ * Resolve candidates from detect-skills
  * ───────────────────────────────────────────────────────────────────── */
 function fetchCandidates() {
   const detectPath = join(__dirname, "detect-skills.mjs");
@@ -81,10 +148,7 @@ function fetchCandidates() {
     throw new Error(`detect-skills exit ${out.status}: ${out.stderr || out.stdout}`);
   }
   const data = JSON.parse(out.stdout);
-  if (ARG_PACK) {
-    return data.selected || [];
-  }
-  // --ids mode
+  if (ARG_PACK) return data.selected || [];
   const wantIds = new Set(ARG_IDS.split(",").map((s) => s.trim()).filter(Boolean));
   return (data.candidates || []).filter((c) => wantIds.has(c.id));
 }
@@ -92,60 +156,88 @@ function fetchCandidates() {
 /* ─────────────────────────────────────────────────────────────────────
  * Build action plan
  * ───────────────────────────────────────────────────────────────────── */
+function endpointFor(c) {
+  if (tunnels && tunnels.urls && tunnels.urls[c.id]) return tunnels.urls[c.id];
+  if (ARG_ENDPOINT_TPL) {
+    return ARG_ENDPOINT_TPL.replace("<id>", c.id).replace("{id}", c.id);
+  }
+  // Default placeholder. Marks call-time failure but proves registration on-chain.
+  return `https://placeholder.invalid/${encodeURIComponent(c.id)}`;
+}
+
 function buildPlan(candidates) {
   return candidates.map((c, i) => {
-    const port = ARG_PORT_BASE + i;
+    const endpoint = endpointFor(c);
+    const pricePerCallWei = BigInt(Math.round(c.suggestedPriceUsdc * 1_000_000));
     return {
       step: i + 1,
       candidateId: c.id,
-      name: c.name,
-      source: c.source,
+      name: c.name.slice(0, 64),
+      description: (c.description || "").slice(0, 200),
+      endpoint,
       category: c.category,
       priceUsdc: c.suggestedPriceUsdc,
-      pricePerCallWei: BigInt(Math.round(c.suggestedPriceUsdc * 1_000_000)).toString(),
-      port,
-      // Placeholder endpoint — gets overwritten when user runs pneuma serve
-      placeholderEndpoint: `https://${c.id.replace(/[^a-z0-9-]/gi, "-")}.placeholder.local`,
-      // The actual command the user / AI will run for this skill.
-      // pneuma serve handles both registration on-chain AND running the local server.
-      command: [
-        "pneuma serve",
-        `--skill-name "${c.name.replace(/"/g, '\\"')}"`,
-        `--description "${(c.description || "").slice(0, 200).replace(/"/g, '\\"')}"`,
-        `--category "${c.category}"`,
-        `--price-usdc ${c.suggestedPriceUsdc}`,
-        `--port ${port}`,
-        `--proxy-cmd "${c.cmd || c.id}"`,
-      ].join(" "),
-      // For tunneling so the endpoint URL is publicly reachable
-      tunnelHint: `pnpm tunnels:up -- --only ${c.id}  # or use a Cloudflare named tunnel`,
+      pricePerCallWei: pricePerCallWei.toString(),
+      providerStake: "0",
+      slaTimeoutSec: "600",
+      slashBps: "3000",
+      maxInputBytes: "8192",
+      maxOutputBytes: "16384",
+      castArgs: [
+        REG,
+        "registerSkill(string,string,string,string,uint256,uint256,uint256,uint256,uint32,uint32)",
+        c.name.slice(0, 64),
+        (c.description || "").slice(0, 200),
+        endpoint,
+        c.category,
+        pricePerCallWei.toString(),
+        "0",
+        "600",
+        "3000",
+        "8192",
+        "16384",
+      ],
     };
   });
 }
 
 /* ─────────────────────────────────────────────────────────────────────
- * Execute (real on-chain registration)
+ * Execute one tx via cast send
  * ───────────────────────────────────────────────────────────────────── */
 function executeOne(action) {
-  // We don't actually call viem here — that's coupled. Instead we shell out
-  // to `pneuma serve --register-only --skill-id ...` which is the canonical
-  // command and already has all the wallet + ABI plumbing.
-  log(`exec step ${action.step}: ${action.command}`);
-  // pneuma serve doesn't have --register-only yet (it both registers + serves).
-  // For onboarding we recommend running each command in a separate terminal so
-  // the local server stays up. Here we just print the command, we don't fork.
-  return {
-    step: action.step,
-    command: action.command,
-    status: "manual-run-required",
-    note: "Run this command in a fresh terminal so the local server stays up while you continue with other steps.",
-  };
+  if (!activeKey) {
+    return { ...action, status: "fail", error: "no active wallet" };
+  }
+  try {
+    const out = execFileSync(
+      "cast",
+      [
+        "send",
+        "--rpc-url", RPC,
+        "--private-key", activeKey,
+        "--json",
+        ...action.castArgs,
+      ],
+      { encoding: "utf8", timeout: 90_000 }
+    );
+    const receipt = JSON.parse(out);
+    return {
+      ...action,
+      status: "ok",
+      txHash: receipt.transactionHash,
+      blockNumber: receipt.blockNumber,
+      // skillId is in event log; cast send doesn't decode but we can find it:
+      // the SkillRegistered event's first indexed topic (after sig) is skillId
+      skillIdHint: receipt.logs?.[0]?.topics?.[1] || null,
+    };
+  } catch (e) {
+    return { ...action, status: "fail", error: String(e?.message ?? e).slice(0, 400) };
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────
  * Main
  * ───────────────────────────────────────────────────────────────────── */
-const pre = preflight();
 const candidates = fetchCandidates();
 if (candidates.length === 0) {
   console.log(JSON.stringify({ ok: false, error: "no candidates resolved", pack: ARG_PACK, ids: ARG_IDS }));
@@ -157,11 +249,14 @@ const totalPrice = plan.reduce((s, p) => s + p.priceUsdc, 0);
 
 let executions = null;
 if (ARG_EXECUTE) {
-  if (pre.blockers.length > 0) {
-    console.log(JSON.stringify({ ok: false, blockers: pre.blockers }, null, 2));
+  if (blockers.length > 0) {
+    console.log(JSON.stringify({ ok: false, blockers }, null, 2));
     process.exit(1);
   }
-  executions = plan.map(executeOne);
+  executions = plan.map((p) => {
+    process.stderr.write(`[register-skills] ▶ step ${p.step}/${plan.length}: ${p.candidateId} → ${p.endpoint}\n`);
+    return executeOne(p);
+  });
 }
 
 const result = {
@@ -169,44 +264,53 @@ const result = {
   mode: ARG_EXECUTE ? "execute" : "dry-run",
   pack: ARG_PACK || null,
   ids: ARG_IDS ? ARG_IDS.split(",") : null,
-  preflight: pre,
+  endpointSource: tunnels ? "tunnels-json" : ARG_ENDPOINT_TPL ? "endpoint-template" : "placeholder",
+  activeWallet: activeAddress,
+  activeLabel,
+  registry: REG,
+  rpc: RPC,
   totalActions: plan.length,
   estTotalRevenuePerFullSweepUsdc: Number(totalPrice.toFixed(2)),
+  preflightBlockers: blockers,
   plan,
   executions,
-  nextSteps: ARG_EXECUTE
-    ? [
-        "Each `pneuma serve` command must run in its own terminal — keep it alive.",
-        "Once running, expose the port via cloudflared or your tunnel of choice.",
-        "Verify on https://pneuma-hub.vercel.app/discover — your skills should appear within 10s of registration.",
-      ]
-    : [
-        `Reviewed ${plan.length} actions; total revenue per full sweep ≈ $${totalPrice.toFixed(2)} USDC.`,
-        "Re-run with --execute to actually register on-chain.",
-        "Or pick a subset:  --ids=" + plan.slice(0, 3).map((p) => p.candidateId).join(",") + ",…",
-      ],
 };
 
 if (ARG_JSON || ARG_EXECUTE) {
   console.log(JSON.stringify(result, null, 2));
 } else {
   console.log(`\n${ARG_PACK ? `Pack: ${ARG_PACK}` : `IDs: ${ARG_IDS}`} → ${plan.length} skills to register`);
-  console.log(`Mode: ${result.mode.toUpperCase()}${ARG_EXECUTE ? "" : " (add --execute to register on-chain)"}`);
-  console.log(`Est aggregate revenue per full sweep: $${totalPrice.toFixed(2)} USDC\n`);
+  console.log(`Mode:           ${result.mode.toUpperCase()}${ARG_EXECUTE ? "" : "  (add --execute to actually broadcast tx)"}`);
+  console.log(`Endpoint src:   ${result.endpointSource}`);
+  console.log(`Active wallet:  ${activeLabel || "?"} ${activeAddress ? "(" + activeAddress + ")" : ""}`);
+  console.log(`SkillRegistry:  ${REG || "?"}`);
+  console.log(`RPC:            ${RPC}`);
+  console.log(`Est revenue/sweep: $${totalPrice.toFixed(2)} USDC\n`);
 
-  if (pre.blockers.length > 0) {
+  if (blockers.length > 0) {
     console.log(`⚠ Pre-flight blockers (must fix before --execute):`);
-    for (const b of pre.blockers) console.log(`   ✗ ${b}`);
+    for (const b of blockers) console.log(`   ✗ ${b}`);
     console.log();
+  }
+
+  if (result.endpointSource === "placeholder" && ARG_EXECUTE) {
+    console.log(`⚠⚠ Endpoint = placeholder.invalid → calls WILL FAIL after registration.`);
+    console.log(`    SkillRegistry has no updateEndpoint — re-registering is the only fix.`);
+    console.log(`    Recommended: run \`pnpm tunnels:up\` first, then re-run with --tunnels-json=...\n`);
   }
 
   console.log(`Action plan:\n`);
   for (const p of plan) {
-    console.log(`[${p.step}] ${p.name}  (${p.candidateId})`);
-    console.log(`     port: ${p.port}    price: $${p.priceUsdc} USDC`);
-    console.log(`     ${p.command}`);
+    console.log(`[${p.step}] ${p.name}`);
+    console.log(`     id:       ${p.candidateId}`);
+    console.log(`     price:    $${p.priceUsdc} USDC (${p.pricePerCallWei} wei)`);
+    console.log(`     category: ${p.category}`);
+    console.log(`     endpoint: ${p.endpoint}`);
     console.log();
   }
 
-  console.log(`Next:  node scripts/register-skills.mjs --pack=${ARG_PACK || "<...>"} --execute`);
+  console.log(`Next steps:`);
+  console.log(`  · pnpm tunnels:up             # bring up cloudflared quick tunnels first`);
+  console.log(`  · cat .tunnels.json           # confirm URL → candidate.id map`);
+  console.log(`  · ${process.argv[1].split("/").slice(-2).join("/")} ${process.argv.slice(2).join(" ")} --tunnels-json=packages/pneuma-claude-skills/.tunnels.json --execute`);
 }
