@@ -27,6 +27,12 @@ const config: NextConfig = {
   async rewrites() {
     return [
       { source: "/skill.md", destination: "/api/skill-md" },
+      // Short URL for the AI-agent handoff skill — paste this into Claude /
+      // Cursor / GPT to give the agent the ability to dispatch user tasks to
+      // the Pneuma marketplace. The actual file lives in public/.
+      { source: "/agent.md", destination: "/agent-skill.md" },
+      // Same for the deploy skill (AI deploys its own Pneuma hub to Vercel).
+      { source: "/deploy.md", destination: "/vercel-deploy-skill.md" },
       {
         source: "/.well-known/agent.json",
         destination: "/api/well-known/agent-json",

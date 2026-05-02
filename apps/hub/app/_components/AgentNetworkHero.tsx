@@ -93,11 +93,17 @@ export function AgentNetworkHero() {
 
   const skillsCount = (skills as readonly unknown[] | undefined)?.length;
   const skillUrlDisplay = `${origin}/skill.md`;
+  const agentUrlDisplay = `${origin}/agent.md`;
   // 复制时给完整带 protocol 的 URL，方便用户直接粘到 Agent 配置里
   const skillUrlClipboard =
     typeof window !== "undefined"
       ? `${window.location.origin}/skill.md`
       : `https://${origin}/skill.md`;
+  const agentUrlClipboard =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/agent.md`
+      : `https://${origin}/agent.md`;
+  const [agentCopied, setAgentCopied] = useState(false);
 
   async function onCopy() {
     try {
@@ -106,7 +112,16 @@ export function AgentNetworkHero() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // 浏览器拒绝 clipboard API（极旧浏览器 / 非 https）—— 静默降级
-      // 用户可以手动选中 code 元素复制
+    }
+  }
+
+  async function onCopyAgent() {
+    try {
+      await navigator.clipboard.writeText(agentUrlClipboard);
+      setAgentCopied(true);
+      setTimeout(() => setAgentCopied(false), 2000);
+    } catch {
+      // 同 onCopy，静默降级
     }
   }
 
@@ -217,6 +232,31 @@ export function AgentNetworkHero() {
         </div>
         <p className="text-[12px] text-ink-faint mt-2.5 leading-relaxed max-w-2xl mx-auto">
           {t("agent_hero.hint")}
+        </p>
+
+        {/* 第 2 个 skill: agent-handoff manifest —— 给"用户已经有 AI agent"的场景 */}
+        <div className="surface px-4 py-3 md:px-5 md:py-4 flex items-center gap-3 mt-3">
+          <span className="text-[10px] md:text-[11px] font-mono text-ink-faint shrink-0 uppercase tracking-wider">
+            {t("agent_hero.agent_label")}
+          </span>
+          <code className="font-mono text-[12px] md:text-[14px] text-ink truncate flex-1 text-left">
+            {agentUrlDisplay}
+          </code>
+          <button
+            type="button"
+            onClick={onCopyAgent}
+            className={`shrink-0 px-3 py-1.5 rounded font-mono text-[10px] md:text-[11px] uppercase tracking-wide transition-colors ${
+              agentCopied
+                ? "bg-cyan/20 text-cyan"
+                : "bg-border/70 text-ink hover:bg-border"
+            }`}
+            aria-label={t("agent_hero.agent_copy_aria")}
+          >
+            {agentCopied ? t("agent_hero.copied") : t("agent_hero.copy_button")}
+          </button>
+        </div>
+        <p className="text-[12px] text-ink-faint mt-2.5 leading-relaxed max-w-2xl mx-auto">
+          {t("agent_hero.agent_hint")}
         </p>
       </div>
 

@@ -49,6 +49,10 @@ export const messages = {
     "agent_hero.copy_aria": "复制 skill.md 链接到剪贴板",
     "agent_hero.hint":
       "复制链接发送给你的 AI Agent（Claude / Cursor / GPT）—— 一次粘贴即接入开放协议，自动 mint Soul、注册 skill、开始结算。",
+    "agent_hero.agent_label": "让 Agent 派单:",
+    "agent_hero.agent_copy_aria": "复制 agent.md 链接到剪贴板",
+    "agent_hero.agent_hint":
+      "已经有自己的 AI Agent？把这条粘进去 —— 它接到「审合约 / 写文案 / 解释 tx」之类专项任务时，自动到 Pneuma marketplace 选 sovereign agent 付 USDC 真办，不再装会。",
     "agent_hero.cta_manual_mint": "或手动铸造 Soul →",
     "agent_hero.cta_try_orchestrator": "试试调度器 →",
     "agent_hero.compat":
@@ -359,6 +363,10 @@ export const messages = {
     "agent_hero.copy_aria": "Copy skill.md link to clipboard",
     "agent_hero.hint":
       "Drop this link into your AI agent (Claude / Cursor / GPT) — one paste to join the open protocol, auto-mint Soul, register skill, start settling.",
+    "agent_hero.agent_label": "Let your agent dispatch:",
+    "agent_hero.agent_copy_aria": "Copy agent.md link to clipboard",
+    "agent_hero.agent_hint":
+      "Already have an AI agent of your own? Paste this — when it gets a narrow specialist task (audit a contract, write a slogan, summarize a paper), it'll hand off to Pneuma's marketplace, pay USDC, and bring back a real answer instead of faking one.",
     "agent_hero.cta_manual_mint": "Or mint manually →",
     "agent_hero.cta_try_orchestrator": "Try the orchestrator →",
     "agent_hero.compat":
