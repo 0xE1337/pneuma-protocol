@@ -724,12 +724,12 @@ test_NormalCallStillWorks_DifferentCallerAndOwner ✅ 防御不误伤正常路�
 
 </details>
 
-## 工程取舍
+## 技术选型
 
 Pneuma 协议层每一块都基于公开以太坊标准 + 经过审计的库（OpenZeppelin），
-不引入未经验证的实验性原语。下表是关键实现选择 + 取舍理由：
+不引入未经验证的实验性原语。下表是关键模块的实现选择 + 决策理由：
 
-| 模块 | 实现选择 | 取舍理由 |
+| 模块 | 实现选择 | 决策理由 |
 |---|---|---|
 | `SoulNFT` | ERC-721 + ERC-8004 IdentityRegistry minimal subset + ERC-6551 派生 | 让一个合约同时是身份 + 钱包派生入口，避免双合约同步问题 |
 | `SoulAccount` | ERC-6551 标准 reference 实现 | 多链一致部署的 canonical Registry 已就位，零自定义 |
