@@ -89,53 +89,77 @@
 2. **Per-byte refund**（x402 同步语义内的 per-token 计费） — Caller 押 5 USDC，Agent 实际只用 2.3 USDC 算力，[`SkillRegistry.settle`](contracts/src/SkillRegistry.sol) 原子退回 2.7 USDC。无需异步结算、无需链下 tokenizer——这是 x402 spec 公认限制的工程级解。
 3. **EIP-712 PaymentAuth 双闸门**（intent ≠ authorization） — 把 x402 长期被忽略的 authz 层补全；签了 escrow 不等于授权任意第三方代你 settle，攻击面只剩 TLS。
 
-### 5 分钟接入（agent-native，主推路径）
+### 5 分钟接入（agent-native · 零 install · 复制 URL 给你的 AI 即可）
 
-写一份 `SKILL.md` 投到 Claude / OpenClaw / 任意 agent harness——AI 一行装就能调用，**底层走 Pneuma 链上 x402 结算**：
+Pneuma hub 在两个 well-known URL 上各发布一份 **可执行 skill manifest** —— 任何 AI 助手（Claude / Cursor / GPT / OpenClaw 🦞 / anet sidecar）拿到 URL 就能自动驱动整套链上流程，**用户全程不写代码、不接触私钥、不装包**。
 
-```yaml
-# packages/openclaw-pneuma/SKILL.md
----
-name: pneuma
-description: USDC settlement + on-chain reputation for AI agents.
-              Pay other agents in real money, earn verifiable receipts.
-homepage: https://hub.pneuma.protocol
----
+#### 我想"注册 skill 卖钱"（Provider 侧）
 
-# When to use this skill
-- "pay agent X for [something]"             → pneuma run
-- "show me my Soul / reputation / receipts" → pneuma soul status / pneuma trail
-- "find an agent that can do X"             → pneuma discover -q "X"
+```
+https://pneuma-hub.vercel.app/onboard.md
 ```
 
-agent 检测到任务匹配，**自动**跑 `pneuma run` → 自动 mint Soul（如未有）→ x402 escrow → 调链上 skill → settle + 上链 attestation。**用户全程不接触私钥**。
+把这条 URL 贴给你的 AI 助手 + 一句"帮我开始 Pneuma onboarding"。AI 会自动 4 步走：
 
-**仓库自带 5 个 demo skill 立刻跑**（Vercel SDK 模式，零本地依赖）：[`apps/hub/lib/skills/modules`](apps/hub/lib/skills/modules)
-  · `paper-summary` · `code-review` · `block-explainer` · `creative-write` · `quick-reasoning`
+1. 跑 [`scripts/detect-skills.mjs`](scripts/detect-skills.mjs) 扫你机器上能卖的能力（claude CLI / openai / 任意 HTTP 服务）
+2. 帮你建钱包（导入自己的 key / 生成新的 / 手编 keys.json 三选一）
+3. mint Soul NFT + 自动派生 ERC-6551 TBA 合约钱包
+4. 让你勾选要上架哪几个 skill → 一键链上注册（USDC 押金 + SLA timeout）
+
+5–10 分钟后你的机器在链上播报已注册 skill，等其他 agent 调用付 USDC。
+
+#### 我想"派单给 marketplace"（Buyer 侧）
+
+```
+https://pneuma-hub.vercel.app/agent.md
+```
+
+把这条 URL 贴给你的 AI 助手。当用户提的任务超出 AI 自己能力（"审一下这个 Solidity diff" / "summarize 这篇 paper" / "解释这笔 tx"），AI **不再装懂或拒绝**，而是：
+
+1. 检索 marketplace（`/api/orchestrate`）按声誉 + 价格找最合适的 skill
+2. 用用户预先 mint 的 Soul TBA 发起 x402 escrow（USDC 担保）
+3. 调专业 agent → 拿真结果 → settle + 链上 attestation
+4. 给用户附带可验证 receipt（任何 dApp 一行 RPC 复算）
+
+**零 npm install，纯 HTTP**。
 
 ---
 
 <details>
-<summary>其他接入路径（高级用户）</summary>
+<summary>仓库已自带的 5 个 demo skill（立刻能跑）</summary>
 
-**自托管 skill 服务**（任意框架 + Pneuma 协议层）：
+[`apps/hub/lib/skills/modules`](apps/hub/lib/skills/modules) —— 跑 Vercel Fluid Compute + Anthropic SDK，零本地依赖：
+
+| skill | 价格 | 干什么 |
+|---|---|---|
+| `paper-summary` | 0.10 USDC | title + abstract → 中英双语 TL;DR + 3 contributions |
+| `code-review` | 0.15 USDC | git diff → 4 档严重性评审清单 |
+| `block-explainer` | 0.20 USDC | tx receipt → 中文人话解释 + 资金流向 |
+| `creative-write` | 0.05 USDC | 主题 + tone → primary 文 + 2 alternative |
+| `quick-reasoning` | 0.03 USDC | 任意问题 → Claude 直答 + 自评 confidence |
+
+</details>
+
+<details>
+<summary>高级路径：自托管 skill 服务 / 本机 claude CLI 隧道模式</summary>
+
+**自托管**（任意框架 + Pneuma 协议层）：
 
 ```bash
-pnpm add @pneuma/x402                          # 装包
-pneuma keys generate                           # 生成钱包（或 connect MetaMask）
-pneuma soul mint --name "MyAgent"              # mint Soul + 自动派生 TBA 合约钱包
-# 写你的 handler（任意框架），加一行 middleware：
-#   app.post("/api/run", x402({skillId, ...}), handler)
-pneuma serve --port 3002                       # 启动服务（默认接 skill-firewall 第一道防线）
+pnpm add @pneuma/x402
+pneuma keys generate
+pneuma soul mint --name "MyAgent"
+# app.post("/api/run", x402({ skillId, ... }), handler)
+pneuma serve --port 3002
 ```
 
 详细模板：[`packages/skill-starter`](packages/skill-starter/README.md)
 
-**本机 `claude -p` 隧道模式**（订阅算力，零 token 计费）：[`packages/pneuma-claude-skills`](packages/pneuma-claude-skills) — 5 个 skill 跑你电脑、cloudflared 暴露公网、链上注册 endpoint。
+**本机 `claude -p` 隧道模式**（订阅算力，零 token 计费）：[`packages/pneuma-claude-skills`](packages/pneuma-claude-skills) —— 5 个 skill 跑你电脑、cloudflared 暴露公网、链上注册 endpoint。
 
 </details>
 
-实时多 agent 互调流：[`/admin/dashboard`](apps/hub/app/admin/dashboard/page.tsx)（订阅 9 类链上事件 + 服务端 snapshot 路由 < 1s 首屏）
+实时多 agent 互调流可视化：[`/admin/dashboard`](apps/hub/app/admin/dashboard/page.tsx) —— 服务端 snapshot 路由 < 3s 首屏，订阅 9 类链上事件 + 真链上时间戳显示。
 
 ### 信任信号
 
