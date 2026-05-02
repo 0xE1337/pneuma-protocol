@@ -30,6 +30,78 @@ import { join } from "node:path";
 const ARG_JSON = process.argv.includes("--json");
 const ARG_FULL_ID = (process.argv.find((a) => a.startsWith("--full=")) || "").slice(7);
 const ARG_SOURCE = (process.argv.find((a) => a.startsWith("--source=")) || "").slice(9);
+const ARG_LIST_PACKS = process.argv.includes("--packs");
+const ARG_PACK = (process.argv.find((a) => a.startsWith("--pack=")) || "").slice(7);
+const ARG_TOP = parseInt((process.argv.find((a) => a.startsWith("--top=")) || "").slice(6) || "0", 10);
+const ARG_HISTORY = process.argv.includes("--history");
+
+/* ─────────────────────────────────────────────────────────────────────
+ * Preset packs — 给 AI 一套"懒人模式"，免去用户一条条勾选 261 项
+ *
+ * pack 是一组 candidate id 的策略：
+ *   - explicit: 列死的 id
+ *   - filter:  函数从全量 candidates 里选
+ *
+ * 命中策略：选 pack 后，scanner 输出该 pack 在本机能落地的 candidates
+ * 子集（id 列出但本机没装的会被跳过）。
+ * ───────────────────────────────────────────────────────────────────── */
+const PRESET_PACKS = {
+  quickstart: {
+    title: "Quickstart Pack — 5 个最戳 demo 的 Claude skill",
+    blurb:
+      "新人 onboard 默认推荐：5 类 Claude Code 衍生 skill，覆盖 engineering / creative / research / blockchain / general。零思考，立刻有 5 个 listing。",
+    explicit: [
+      "claude-cli",
+      "agent-code-reviewer",
+      "agent-architect",
+      "skill-article-writing",
+      "skill-deep-research",
+    ],
+  },
+  "web3-dev": {
+    title: "Web3 Developer Pack",
+    blurb: "给 Solidity / EVM 开发者：合约审计 + 链上分析 + AMM 安全 + 钱包安全。",
+    filter: (c) =>
+      ["web3", "blockchain", "security"].includes(c.category) ||
+      /defi|amm|wallet|contract|forge|cast|evm/i.test(c.id),
+    cap: 8,
+  },
+  "content-creator": {
+    title: "Content Creator Pack",
+    blurb: "写作 / 媒体处理 / 排版：creative-write + brand-voice + ffmpeg + pandoc。",
+    filter: (c) =>
+      ["creative", "media", "office"].includes(c.category) ||
+      /writing|brand|content|video|audio|image|copy/i.test(c.id),
+    cap: 8,
+  },
+  research: {
+    title: "Research Pack",
+    blurb: "学术 + 调研 + 信息检索：paper-summary + deep-research + exa + gh-search。",
+    filter: (c) =>
+      c.category === "research" ||
+      /research|paper|search|exa|deep-research|investigate/i.test(c.id),
+    cap: 8,
+  },
+  "ai-agents": {
+    title: "AI Agents Pack",
+    blurb: "把 Claude Code 的 48 个 subagent 全部注册（pro 用户路径）—— architect / reviewer / planner ...",
+    filter: (c) => c.source === "claude-agent",
+    cap: 50, // 全收
+  },
+  marketplace: {
+    title: "Marketplace Pack",
+    blurb: "已经从 plugin marketplaces 安装的所有 skill —— pua-skills / claude-plugins-official 等。",
+    filter: (c) => c.source === "marketplace-skill",
+    cap: 50,
+  },
+  everything: {
+    title: "⚠ Everything Pack",
+    blurb:
+      "全部 261 个候选都注册。**很可能太多** —— 注册有 gas 成本（每个 skill 一笔 tx），TBA 没那么多 USDC。除非你确定，不建议走这条。",
+    filter: () => true,
+    cap: 999,
+  },
+};
 
 const HOME = homedir();
 const CLAUDE_DIR = join(HOME, ".claude");
@@ -368,9 +440,109 @@ if (ARG_FULL_ID) {
     console.log(JSON.stringify({ ok: false, error: `no candidate with id=${ARG_FULL_ID}` }));
     process.exit(1);
   }
-  // Read full source (for claude-agent / skill, the markdown)
   const full = hit.cmdPath && hit.cmdPath.endsWith(".md") ? safeRead(hit.cmdPath) : null;
   console.log(JSON.stringify({ ok: true, candidate: hit, fullText: full }, null, 2));
+  process.exit(0);
+}
+
+// --packs: list available packs (no detection needed beyond catalog metadata)
+if (ARG_LIST_PACKS) {
+  const out = Object.entries(PRESET_PACKS).map(([key, p]) => ({
+    pack: key,
+    title: p.title,
+    blurb: p.blurb,
+    cap: p.cap ?? p.explicit?.length ?? null,
+    strategy: p.explicit ? "explicit" : "filter",
+  }));
+  if (ARG_JSON) {
+    console.log(JSON.stringify({ ok: true, packs: out }, null, 2));
+  } else {
+    console.log(`\nAvailable packs (use --pack=<name>):\n`);
+    for (const p of out) {
+      console.log(`── ${p.pack.padEnd(20)} cap=${p.cap}  ──`);
+      console.log(`   ${p.title}`);
+      console.log(`   ${p.blurb}\n`);
+    }
+  }
+  process.exit(0);
+}
+
+// --pack=<name>: pre-filter candidates to that pack's intersection with the live machine
+if (ARG_PACK) {
+  const pack = PRESET_PACKS[ARG_PACK];
+  if (!pack) {
+    console.log(
+      JSON.stringify({
+        ok: false,
+        error: `unknown pack=${ARG_PACK}`,
+        availablePacks: Object.keys(PRESET_PACKS),
+      })
+    );
+    process.exit(1);
+  }
+  let picked;
+  if (pack.explicit) {
+    const want = new Set(pack.explicit);
+    picked = allCandidates.filter((c) => want.has(c.id));
+    // 报告 explicit pack 里有哪些 id 本机没装
+    const missing = pack.explicit.filter((id) => !allCandidates.find((c) => c.id === id));
+    if (missing.length > 0 && !ARG_JSON) {
+      console.error(`[note] pack "${ARG_PACK}" defines ${pack.explicit.length} ids; ${missing.length} not found locally: ${missing.join(", ")}`);
+    }
+  } else {
+    picked = allCandidates.filter(pack.filter);
+    picked = picked.sort((a, b) => b.suggestedPriceUsdc - a.suggestedPriceUsdc).slice(0, pack.cap ?? 10);
+  }
+  const totalCost = picked.reduce((sum, c) => sum + c.suggestedPriceUsdc, 0);
+  const result = {
+    ok: true,
+    pack: ARG_PACK,
+    title: pack.title,
+    blurb: pack.blurb,
+    selected: picked,
+    selectedCount: picked.length,
+    estTotalRevenuePerCallUsdc: Number(totalCost.toFixed(2)),
+  };
+  if (ARG_JSON) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(`\n${pack.title}\n${pack.blurb}\n`);
+    console.log(`Selected ${picked.length} candidates from this machine:\n`);
+    for (const c of picked) {
+      console.log(
+        `  · ${c.id.padEnd(46)} $${c.suggestedPriceUsdc} USDC   [${c.source} / ${c.category}]`
+      );
+    }
+    console.log(`\nEst aggregate revenue per full sweep: $${totalCost.toFixed(2)} USDC`);
+    console.log(`\nNext: register them all with one command:`);
+    console.log(`  node scripts/register-skills.mjs --pack=${ARG_PACK}`);
+    console.log(`(or pass --ids=${picked.map((c) => c.id).slice(0, 3).join(",")},… to register-skills.mjs to register specific ones)`);
+  }
+  process.exit(0);
+}
+
+// --top=<N>: shortcut "give me the N highest-priced candidates per source"
+if (ARG_TOP > 0) {
+  const grouped = {};
+  for (const c of allCandidates) {
+    grouped[c.source] = grouped[c.source] || [];
+    grouped[c.source].push(c);
+  }
+  const picked = [];
+  for (const [src, list] of Object.entries(grouped)) {
+    list.sort((a, b) => b.suggestedPriceUsdc - a.suggestedPriceUsdc);
+    picked.push(...list.slice(0, ARG_TOP));
+  }
+  if (ARG_JSON) {
+    console.log(JSON.stringify({ ok: true, mode: "top-per-source", n: ARG_TOP, candidates: picked }, null, 2));
+  } else {
+    console.log(`\nTop ${ARG_TOP} per source (${picked.length} total):\n`);
+    for (const c of picked) {
+      console.log(
+        `  · ${c.id.padEnd(46)} $${c.suggestedPriceUsdc} USDC   [${c.source} / ${c.category}]`
+      );
+    }
+  }
   process.exit(0);
 }
 

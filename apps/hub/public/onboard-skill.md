@@ -149,38 +149,93 @@ pneuma soul status
 # → Soul #N · TBA 0xabcd… · USDC <bal> · Reputation 0 (cold-start)
 ```
 
-### Step 4 — Pick which detected tools to register as paid skills
+### Step 4 — Pick which detected skills to register (5 selection modes)
 
-Re-show the candidate list from Step 1. Ask the user *"which of these would you like to start selling?"* (suggest checking ≥3 to seed the marketplace, but they can pick 1).
+You have 261 candidates from Step 1. **Do NOT make the user tick boxes one-by-one.** Use one of these 5 modes instead — pick the one that matches what the user said.
 
-For each picked candidate, run:
+#### Mode A — Quickstart Pack (default for new users)
 
-```bash
-cd /path/to/pneuma-protocol/packages/pneuma-claude-skills
-# Start the local HTTP server for that skill (occupies a port)
-pnpm start:single -- --skill-id <candidate.id> --port <unused-port>
-
-# In a second terminal, expose it via cloudflared (zero-OAuth quick tunnel)
-pnpm tunnels:up -- --only <candidate.id>
-
-# Once the trycloudflare URL is in .tunnels.json, register on-chain:
-pnpm register:single -- \
-  --skill-id <candidate.id> \
-  --name "<candidate.name>" \
-  --description "<candidate.description>" \
-  --category "<candidate.category>" \
-  --price-usdc <candidate.suggestedPriceUsdc>
-```
-
-Or, if `pneuma serve` (CLI) is the path the user prefers:
+Best for: *"I just want to get started, give me defaults"*
 
 ```bash
-pneuma serve --skill-id <candidate.id> --port <unused-port>
-# (this command will both start the local server and register on-chain;
-#  see `pneuma serve --help` for current flags)
+node scripts/register-skills.mjs --pack=quickstart
 ```
 
-After each registration, point the user at `https://pneuma-hub.vercel.app/discover` — they should see their new skill in the list within ~10 s.
+This selects 5 high-signal candidates (architect / code-reviewer / article-writing / deep-research / claude-cli) totaling ~$0.63 USDC per full sweep. Show the dry-run plan to the user, then add `--execute` once they confirm.
+
+#### Mode B — Goal-driven Pack
+
+Best for: *"I'm a Solidity dev / content creator / researcher"*
+
+```bash
+node scripts/register-skills.mjs --pack=web3-dev          # Solidity / EVM / security skills
+node scripts/register-skills.mjs --pack=content-creator   # writing / media / brand voice
+node scripts/register-skills.mjs --pack=research          # paper / search / deep-research
+node scripts/register-skills.mjs --pack=ai-agents         # all 48 Claude subagents
+node scripts/register-skills.mjs --pack=marketplace       # all marketplace plugins
+node scripts/register-skills.mjs --pack=everything        # ⚠ 261 skills + lots of gas
+```
+
+List the pack catalog any time:
+
+```bash
+node scripts/detect-skills.mjs --packs
+```
+
+#### Mode C — Top-N per source
+
+Best for: *"I want a balanced spread, not deep into one category"*
+
+```bash
+node scripts/detect-skills.mjs --top=3       # top 3 (by suggested price) per source = 15 candidates
+node scripts/register-skills.mjs --ids=$(node scripts/detect-skills.mjs --top=3 --json | jq -r '.candidates[].id' | tr '\n' ',' | sed 's/,$//')
+```
+
+#### Mode D — AI-assisted natural-language pick
+
+Best for: *"I don't know what I want, what should I pick?"*
+
+You (the AI) read the user's recent context (what repo are they in? what languages? recent commits?) and **suggest 3-5 candidates by id**. Then:
+
+```bash
+node scripts/register-skills.mjs --ids=agent-code-reviewer,agent-architect,skill-defi-amm-security
+```
+
+Always show the dry-run before suggesting `--execute`.
+
+#### Mode E — Manual fzf picker (power user)
+
+Best for: *"Let me see all 261 and pick myself"*
+
+```bash
+SELECTED=$(node scripts/detect-skills.mjs --json | jq -r '.candidates[] | "\(.id)\t$\(.suggestedPriceUsdc)\t\(.category)\t\(.name)"' | fzf -m | cut -f1 | tr '\n' ',' | sed 's/,$//')
+node scripts/register-skills.mjs --ids="$SELECTED"
+```
+
+`fzf -m` lets the user multi-select with TAB. Requires `brew install fzf` if missing.
+
+---
+
+**For all 5 modes the workflow is the same**:
+
+1. Show dry-run output (lists each `pneuma serve` command + estimated revenue per full sweep).
+2. Confirm with the user — *"this will register X skills and start X local servers; want to proceed?"*
+3. Run `--execute`.
+4. **Each `pneuma serve` command launches in its own terminal** so the local HTTP server stays alive while you keep onboarding the next one. Tell the user this — they may need to open a tmux / multiple iTerm windows.
+5. Expose ports via cloudflared:
+   ```bash
+   pnpm tunnels:up   # auto-tunnels all running skill ports
+   ```
+6. Once each skill's trycloudflare URL is reachable, the on-chain registration completes and **`https://pneuma-hub.vercel.app/discover` shows the new skill within ~10 s**.
+
+---
+
+#### Failure modes & recovery
+
+- `[register-skills] error: Pneuma CLI not in PATH` → step user back to running `npm install -g @pneuma/cli`.
+- `[register-skills] error: No ~/.pneuma/keys.json` → step user back to Step 2.
+- `pneuma serve … failed: SelfCallForbidden` → user picked a candidate where the skill owner *is* the active wallet. Switch wallet (`pneuma keys activate -l <other>`) and retry just that one.
+- A specific skill registers but `/discover` doesn't show it → tunnel didn't come up. Run `pnpm tunnels:status` to verify, restart with `pnpm tunnels:up`.
 
 ---
 
