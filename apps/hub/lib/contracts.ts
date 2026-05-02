@@ -307,6 +307,33 @@ export const SkillRegistryAbi = [
     inputs: [],
     outputs: [{ name: "", type: "address" }],
   },
+  // CallRecord 完整读 —— 给 PneumaCourt 起诉前自动校验 status / caller / 拿 skillId 推导 defendant
+  {
+    type: "function",
+    name: "getCall",
+    stateMutability: "view",
+    inputs: [{ name: "callId", type: "uint256" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "callId", type: "uint256" },
+          { name: "skillId", type: "uint256" },
+          { name: "caller", type: "address" },
+          { name: "callerTBA", type: "address" },
+          { name: "amountEscrowed", type: "uint256" },
+          { name: "paymentHash", type: "bytes32" },
+          { name: "status", type: "uint8" }, // 0=Pending, 1=Settled, 2=Refunded
+          { name: "startedAt", type: "uint256" },
+          { name: "slashed", type: "bool" },
+          { name: "inputBytes", type: "uint32" },
+          { name: "maxOutputBytes", type: "uint32" },
+          { name: "actualOutputBytes", type: "uint32" },
+        ],
+      },
+    ],
+  },
   {
     type: "function",
     name: "escrowForCall",
