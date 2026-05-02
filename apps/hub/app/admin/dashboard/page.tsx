@@ -592,10 +592,26 @@ function ActivityFeedPanel() {
   );
 }
 
+/**
+ * 把秒数格式化为「now / 5s / 12m / 3h / 4d」 —— 评委瞄一眼就懂的相对时间。
+ * 12 分钟前的事件说"now"是骗人的，会让人觉得页面 fake 数据。
+ */
+function formatRelativeAge(ageSec: number): string {
+  if (ageSec < 0) return "now"; // 未来时间（chain 时钟漂移），保守显示
+  if (ageSec < 5) return "now";
+  if (ageSec < 60) return `${Math.floor(ageSec)}s`;
+  if (ageSec < 3600) return `${Math.floor(ageSec / 60)}m`;
+  if (ageSec < 86400) return `${Math.floor(ageSec / 3600)}h`;
+  return `${Math.floor(ageSec / 86400)}d`;
+}
+
 function FeedRow({ event }: { event: LiveEvent }) {
   const meta = KIND_META[event.kind];
   const summary = summarizeEvent(event);
-  const ageSec = (Date.now() - event.receivedAt) / 1000;
+  // 优先用链上时间（snapshot 路由提供）；watchContractEvent 实时事件没有
+  // chainTimestamp，fallback 到 receivedAt（此时刚收到 = "now"）
+  const eventTime = event.chainTimestamp ?? event.receivedAt;
+  const ageSec = (Date.now() - eventTime) / 1000;
 
   return (
     <a
@@ -630,7 +646,7 @@ function FeedRow({ event }: { event: LiveEvent }) {
         )}
       </span>
       <span className="text-ink-faint shrink-0 text-[9px]">
-        {ageSec < 1 ? "now" : `${ageSec.toFixed(0)}s`}
+        {formatRelativeAge(ageSec)}
       </span>
     </a>
   );

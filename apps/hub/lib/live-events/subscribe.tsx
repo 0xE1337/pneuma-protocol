@@ -155,6 +155,7 @@ function useHistoryBackfill() {
             blockNumber: string;
             txHash: Hex;
             args: Record<string, unknown>;
+            chainTimestamp: number;
           }>;
           generatedAt: number;
           elapsedMs: number;
@@ -182,6 +183,7 @@ function useHistoryBackfill() {
             blockNumber: BigInt(evt.blockNumber),
             txHash: evt.txHash,
             args,
+            chainTimestamp: evt.chainTimestamp,
           });
         }
         console.log(

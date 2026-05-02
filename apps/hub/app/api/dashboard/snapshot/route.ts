@@ -73,6 +73,8 @@ interface SerializedEvent {
   blockNumber: string; // bigint → string
   txHash: Hex;
   args: Record<string, unknown>;
+  /** Unix ms; 服务端按 latestBlock.timestamp - (latest-block) × 8s 估算（Arc ~8s/block） */
+  chainTimestamp: number;
 }
 
 /** 把 args 里的 bigint 全部转字符串，bytes 保留 hex */
@@ -99,6 +101,12 @@ export async function GET() {
     const latest = await client.getBlockNumber();
     const earliest =
       latest > HISTORY_BLOCK_RANGE ? latest - HISTORY_BLOCK_RANGE : 0n;
+
+    // 拿最新块时间戳作为 anchor，事件时间按 8s/block 换算
+    // 这样 backfill 的"5h ago"是真实的链上时间，不再全部显示 "now"
+    const latestBlockMeta = await client.getBlock({ blockNumber: latest });
+    const latestBlockTimestampMs = Number(latestBlockMeta.timestamp) * 1000;
+    const SECONDS_PER_BLOCK = 8;
 
     // 切 chunks（每段 ≤ 9500 blocks，Arc RPC 10000 上限内）
     const chunks: Array<{ from: bigint; to: bigint }> = [];
@@ -138,12 +146,17 @@ export async function GET() {
         blockNumber: bigint;
         args: Record<string, unknown>;
       }>) {
+        // 用块号 delta × 8s 估算时间；比每个 event 单独 getBlock 便宜 200×
+        const blockDelta = Number(latest - log.blockNumber);
+        const chainTimestamp =
+          latestBlockTimestampMs - blockDelta * SECONDS_PER_BLOCK * 1000;
         flat.push({
           id: `${log.transactionHash}:${log.logIndex}`,
           kind,
           blockNumber: log.blockNumber.toString(),
           txHash: log.transactionHash,
           args: serializeArgs(log.args ?? {}),
+          chainTimestamp,
         });
       }
     }

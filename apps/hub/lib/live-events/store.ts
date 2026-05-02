@@ -43,8 +43,14 @@ export interface LiveEvent {
   kind: LiveEventKind;
   blockNumber: bigint;
   txHash: Hex;
-  /** 客户端收到事件的时间（用于"刚刚"显示） */
+  /** 客户端收到事件的时间（用于"刚刚"显示，新进事件用） */
   receivedAt: number;
+  /**
+   * 真实链上时间戳（unix ms）。Snapshot 路由按 latestBlock.timestamp -
+   * (latest-block)*8s 估算。新进事件 (watchContractEvent) 此字段缺省，
+   * 渲染时 fallback 到 receivedAt。
+   */
+  chainTimestamp?: number;
   /** 各事件 args（按 kind 不同字段不同，使用方按 kind 解构） */
   args: Record<string, unknown>;
 }
