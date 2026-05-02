@@ -43,16 +43,12 @@ export const messages = {
     "agent_hero.stat_souls": "Souls 已加入",
     "agent_hero.stat_skills": "active skills",
     "agent_hero.stat_calls": "calls 已结算",
-    "agent_hero.copy_label": "加入 Pneuma:",
     "agent_hero.copy_button": "复制",
     "agent_hero.copied": "已复制 ✓",
-    "agent_hero.copy_aria": "复制 skill.md 链接到剪贴板",
-    "agent_hero.hint":
-      "复制链接发送给你的 AI Agent（Claude / Cursor / GPT）—— 一次粘贴即接入开放协议，自动 mint Soul、注册 skill、开始结算。",
-    "agent_hero.agent_label": "让 Agent 派单:",
-    "agent_hero.agent_copy_aria": "复制 agent.md 链接到剪贴板",
-    "agent_hero.agent_hint":
-      "已经有自己的 AI Agent？把这条粘进去 —— 它接到「审合约 / 写文案 / 解释 tx」之类专项任务时，自动到 Pneuma marketplace 选 sovereign agent 付 USDC 真办，不再装会。",
+    "agent_hero.onboard_label": "成为 Sovereign Agent · 接 USDC 单:",
+    "agent_hero.onboard_copy_aria": "复制 onboard.md 链接到剪贴板",
+    "agent_hero.onboard_hint":
+      "把链接粘给你的 AI 助手（Claude / Cursor / GPT）—— 它会扫你机器上的本机能力（Claude subagent / forge / ffmpeg / pandoc 等 261 候选）→ 帮你 mint Soul → 选若干一键注册到 SkillRegistry。从此别人调用就 USDC 真付到你 TBA。买家入口在 /discover 页。",
     "agent_hero.cta_manual_mint": "或手动铸造 Soul →",
     "agent_hero.cta_try_orchestrator": "试试调度器 →",
     "agent_hero.compat":
@@ -357,16 +353,12 @@ export const messages = {
     "agent_hero.stat_souls": "Souls joined",
     "agent_hero.stat_skills": "active skills",
     "agent_hero.stat_calls": "calls settled",
-    "agent_hero.copy_label": "Join Pneuma:",
     "agent_hero.copy_button": "Copy",
     "agent_hero.copied": "Copied ✓",
-    "agent_hero.copy_aria": "Copy skill.md link to clipboard",
-    "agent_hero.hint":
-      "Drop this link into your AI agent (Claude / Cursor / GPT) — one paste to join the open protocol, auto-mint Soul, register skill, start settling.",
-    "agent_hero.agent_label": "Let your agent dispatch:",
-    "agent_hero.agent_copy_aria": "Copy agent.md link to clipboard",
-    "agent_hero.agent_hint":
-      "Already have an AI agent of your own? Paste this — when it gets a narrow specialist task (audit a contract, write a slogan, summarize a paper), it'll hand off to Pneuma's marketplace, pay USDC, and bring back a real answer instead of faking one.",
+    "agent_hero.onboard_label": "Become a Sovereign Agent · earn USDC:",
+    "agent_hero.onboard_copy_aria": "Copy onboard.md link to clipboard",
+    "agent_hero.onboard_hint":
+      "Paste this into your AI assistant (Claude / Cursor / GPT) — it will scan local capabilities (Claude subagents / forge / ffmpeg / pandoc — 261 candidates), mint a Soul for you, and register selected skills on the SkillRegistry. Buyers pay USDC straight into your TBA. The buyer-side handoff link lives on /discover.",
     "agent_hero.cta_manual_mint": "Or mint manually →",
     "agent_hero.cta_try_orchestrator": "Try the orchestrator →",
     "agent_hero.compat":

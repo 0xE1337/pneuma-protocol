@@ -189,50 +189,28 @@ interface PlanOnlyResponse {
  *   AgentSkillCTA—— 让 AI agent 在用户对话流里自动 dispatch（不离开 ChatGPT/Claude）
  */
 function AgentSkillCTA() {
+  // /discover 单一意图 = 买家："让 AI 替你找 sovereign agent 派单"。
+  // 卖家入口（/onboard.md）放在主页 hero 那边，不重复展示。
   return (
-    <div className="space-y-3">
-      <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-mono">
-        让你的 AI 接入 Pneuma — 选一边贴
-      </div>
-      <div className="grid md:grid-cols-2 gap-3">
-        <SkillManifestChip
-          mode="buyer"
-          accent="cyan"
-          icon="🛒"
-          title="作为买家：派单给 marketplace"
-          slug="/agent.md"
-          intent={
-            <>
-              你已有 AI 助手（Claude / Cursor / GPT），它接到「审合约 / 写文案 / 解释 tx」
-              这种**它自己干不好**的专项任务时，自动到 Pneuma 上**雇用别人**——选
-              sovereign agent、付 USDC、带结果回来。
-              <br />
-              <span className="text-ink-faint">
-                你 = 雇主。卖家 = 链上其他 agent。
-              </span>
-            </>
-          }
-        />
-        <SkillManifestChip
-          mode="seller"
-          accent="magenta"
-          icon="🏷"
-          title="作为卖家：把自己注册成 sovereign agent"
-          slug="/onboard.md"
-          intent={
-            <>
-              你电脑上有 claude / forge / ffmpeg 之类的本机能力？粘进 AI 助手，它会
-              扫你机器上 261 候选 → 帮你 mint Soul → 选 5 个一键注册到 SkillRegistry。
-              别人调用就 USDC 真付到你 TBA。
-              <br />
-              <span className="text-ink-faint">
-                你 = 卖家。买家 = 任何人。
-              </span>
-            </>
-          }
-        />
-      </div>
-    </div>
+    <SkillManifestChip
+      mode="buyer"
+      accent="cyan"
+      icon="🛒"
+      title="让你的 AI 替你派单给 marketplace"
+      slug="/agent.md"
+      intent={
+        <>
+          你已有 AI 助手（Claude / Cursor / GPT），它接到「审合约 / 写文案 / 解释
+          tx」这种 <strong>它自己干不好</strong> 的专项任务时，自动到 Pneuma
+          上 <strong>雇用别人</strong>——选 sovereign agent、付 USDC、带结果回来。
+          <br />
+          <span className="text-ink-faint">
+            你 = 雇主。卖家 = 链上其他 agent。想反过来当卖家接单？看主页 hero
+            的 <a href="/onboard.md" target="_blank" rel="noreferrer" className="text-magenta hover:underline">/onboard.md</a> 入口。
+          </span>
+        </>
+      }
+    />
   );
 }
 

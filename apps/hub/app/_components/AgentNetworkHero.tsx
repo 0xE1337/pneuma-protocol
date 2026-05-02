@@ -43,7 +43,6 @@ export function AgentNetworkHero() {
   // origin SSR 安全：先用 placeholder，mount 后切换到真实 host
   // 这样 /skill.md 路径在 dev (localhost:3100) 和 prod (hub.pneuma.protocol) 都对
   const [origin, setOrigin] = useState("hub.pneuma.protocol");
-  const [copied, setCopied] = useState(false);
   // mounted gate：wagmi/walletconnect 依赖 indexedDB（浏览器 only），
   // SSR 时调 useReadContract 会抛 [ReferenceError: indexedDB is not defined]。
   // 用 enabled: mounted 把链上请求推迟到 hydration 之后。
@@ -92,36 +91,22 @@ export function AgentNetworkHero() {
   });
 
   const skillsCount = (skills as readonly unknown[] | undefined)?.length;
-  const skillUrlDisplay = `${origin}/skill.md`;
-  const agentUrlDisplay = `${origin}/agent.md`;
-  // 复制时给完整带 protocol 的 URL，方便用户直接粘到 Agent 配置里
-  const skillUrlClipboard =
+  // 主页只放 seller 入口 (/onboard.md)。买家入口 (/agent.md) 在 /discover 那边。
+  // 单一意图分页，不混不重复。
+  const onboardUrlDisplay = `${origin}/onboard.md`;
+  const onboardUrlClipboard =
     typeof window !== "undefined"
-      ? `${window.location.origin}/skill.md`
-      : `https://${origin}/skill.md`;
-  const agentUrlClipboard =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/agent.md`
-      : `https://${origin}/agent.md`;
-  const [agentCopied, setAgentCopied] = useState(false);
+      ? `${window.location.origin}/onboard.md`
+      : `https://${origin}/onboard.md`;
+  const [onboardCopied, setOnboardCopied] = useState(false);
 
-  async function onCopy() {
+  async function onCopyOnboard() {
     try {
-      await navigator.clipboard.writeText(skillUrlClipboard);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(onboardUrlClipboard);
+      setOnboardCopied(true);
+      setTimeout(() => setOnboardCopied(false), 2000);
     } catch {
       // 浏览器拒绝 clipboard API（极旧浏览器 / 非 https）—— 静默降级
-    }
-  }
-
-  async function onCopyAgent() {
-    try {
-      await navigator.clipboard.writeText(agentUrlClipboard);
-      setAgentCopied(true);
-      setTimeout(() => setAgentCopied(false), 2000);
-    } catch {
-      // 同 onCopy，静默降级
     }
   }
 
@@ -179,55 +164,31 @@ export function AgentNetworkHero() {
         </a>
       </div>
 
-      {/* Copy URL 主 CTA —— Coze 同款形态 */}
+      {/* 主 CTA —— 主页只放 seller 入口 (/onboard.md)：把你的 AI 注册到协议接 USDC 单。
+          买家 (/agent.md) 入口在 /discover 那边，IA 上单一意图 — 不混不重复。 */}
       <div className="w-full max-w-3xl mt-1">
         <div className="surface px-4 py-3 md:px-5 md:py-4 flex items-center gap-3">
           <span className="text-[10px] md:text-[11px] font-mono text-ink-faint shrink-0 uppercase tracking-wider">
-            {t("agent_hero.copy_label")}
+            {t("agent_hero.onboard_label")}
           </span>
           <code className="font-mono text-[12px] md:text-[14px] text-ink truncate flex-1 text-left">
-            {skillUrlDisplay}
+            {onboardUrlDisplay}
           </code>
           <button
             type="button"
-            onClick={onCopy}
+            onClick={onCopyOnboard}
             className={`shrink-0 px-3 py-1.5 rounded font-mono text-[10px] md:text-[11px] uppercase tracking-wide transition-colors ${
-              copied
-                ? "bg-cyan/20 text-cyan"
+              onboardCopied
+                ? "bg-magenta/20 text-magenta"
                 : "bg-border/70 text-ink hover:bg-border"
             }`}
-            aria-label={t("agent_hero.copy_aria")}
+            aria-label={t("agent_hero.onboard_copy_aria")}
           >
-            {copied ? t("agent_hero.copied") : t("agent_hero.copy_button")}
+            {onboardCopied ? t("agent_hero.copied") : t("agent_hero.copy_button")}
           </button>
         </div>
         <p className="text-[12px] text-ink-faint mt-2.5 leading-relaxed max-w-2xl mx-auto">
-          {t("agent_hero.hint")}
-        </p>
-
-        {/* 第 2 个 skill: agent-handoff manifest —— 给"用户已经有 AI agent"的场景 */}
-        <div className="surface px-4 py-3 md:px-5 md:py-4 flex items-center gap-3 mt-3">
-          <span className="text-[10px] md:text-[11px] font-mono text-ink-faint shrink-0 uppercase tracking-wider">
-            {t("agent_hero.agent_label")}
-          </span>
-          <code className="font-mono text-[12px] md:text-[14px] text-ink truncate flex-1 text-left">
-            {agentUrlDisplay}
-          </code>
-          <button
-            type="button"
-            onClick={onCopyAgent}
-            className={`shrink-0 px-3 py-1.5 rounded font-mono text-[10px] md:text-[11px] uppercase tracking-wide transition-colors ${
-              agentCopied
-                ? "bg-cyan/20 text-cyan"
-                : "bg-border/70 text-ink hover:bg-border"
-            }`}
-            aria-label={t("agent_hero.agent_copy_aria")}
-          >
-            {agentCopied ? t("agent_hero.copied") : t("agent_hero.copy_button")}
-          </button>
-        </div>
-        <p className="text-[12px] text-ink-faint mt-2.5 leading-relaxed max-w-2xl mx-auto">
-          {t("agent_hero.agent_hint")}
+          {t("agent_hero.onboard_hint")}
         </p>
       </div>
 
