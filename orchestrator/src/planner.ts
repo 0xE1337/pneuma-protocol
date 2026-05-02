@@ -124,8 +124,33 @@ ${JSON.stringify(skillCatalog, null, 2)}
 
 /**
  * 给 LLM 提示每个 skill 的预期 body 字段（避免 LLM 乱填）
+ *
+ * 优先按 skill name 精确匹配（Claude skill 比 category 更精细）；
+ * 没匹配再 fallback 到 category 匹配；都没就空对象。
+ *
+ * 这些 schema 必须跟 packages/pneuma-claude-skills/src/skills/*.ts 各 handler
+ * 里实际读的字段保持一致。改了 handler 也要更新这里。
  */
 function hintForSkill(s: DiscoveredSkill): string {
+  // ── packages/pneuma-claude-skills 5 个 skill ─────────────────────
+  // 必须对齐 src/skills/<id>.ts 里 handler 实际读的字段
+  if (s.name === "Paper Summary") {
+    return '{ "title": string, "abstract": string, "field"?: string }';
+  }
+  if (s.name === "Code Review") {
+    return '{ "language": string, "diff": string (git unified diff), "context"?: string }';
+  }
+  if (s.name === "Block Explainer") {
+    return '{ "txHash"?: string, "chainId"?: number, "rawTx": object (eth_getTransactionReceipt JSON), "contracts"?: Record<address, name> }';
+  }
+  if (s.name === "Creative Write") {
+    return '{ "topic": string, "genre"?: "twitter-thread" | "blog-intro" | "product-tagline" | "story-opening", "tone"?: string, "lang"?: "zh" | "en", "constraints"?: string[] }';
+  }
+  if (s.name === "Quick Reasoning") {
+    return '{ "question": string, "lang"?: "zh" | "en", "max_words"?: number }';
+  }
+
+  // ── 旧 hub 系 skill 按 category 兜底 ──────────────────────────────
   if (s.category === "finance") {
     return '{ "symbol": "ETH" | "BTC" | "USDC" | "USDT" | "ARC" | "SOL" | "PNEUMA" }';
   }

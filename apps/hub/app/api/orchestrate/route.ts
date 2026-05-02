@@ -1,8 +1,13 @@
 /**
  * Orchestrator HTTP bridge — 把前端的 query 转给 orchestrator 包跑完整流程
  *
- * 注意：使用了 server-side DEPLOYER_PRIVATE_KEY 来发交易（demo 简化）。
- * 生产场景应该让用户钱包直接调，这里是为了快速演示。
+ * Caller signing key 选择：
+ *   - 优先 ORCHESTRATOR_CALLER_PRIVATE_KEY（专用，独立于 deployer + test seller）
+ *   - 退回 TEST_SELLER_PRIVATE_KEY（hub 已有的 hackathon 测试钱包）
+ *   - **绝不用 DEPLOYER_PRIVATE_KEY** —— deployer 是 5 个 claude-skill 的 owner，
+ *     用它当 caller 会触发 SkillRegistry.SelfCallForbidden() 自调防作弊保护
+ *
+ * 生产场景应该让用户自己钱包直接调，这里 server-side 签是 demo 简化。
  */
 
 import { NextResponse } from "next/server";
@@ -17,7 +22,9 @@ const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 5042002);
 const USDC_TOKEN = process.env.NEXT_PUBLIC_USDC_ADDRESS as Address;
 const SKILL_REGISTRY = process.env.NEXT_PUBLIC_SKILL_REGISTRY_ADDRESS as Address;
 const SOUL_NFT = process.env.NEXT_PUBLIC_SOUL_NFT_ADDRESS as Address;
-const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY as Hex;
+// Caller key —— 必须跟 skill owner 不同，否则 SelfCallForbidden
+const PRIVATE_KEY = (process.env.ORCHESTRATOR_CALLER_PRIVATE_KEY ??
+  process.env.TEST_SELLER_PRIVATE_KEY) as Hex;
 
 const SoulNFTAbi = [
   {
