@@ -357,7 +357,7 @@ roleWeight   = { PROVIDER: 1.0, CALLER: 1.5, JUROR: 2.0, SYSTEM: 0 }
 | **Soul 可携带 + 转主可见** | ERC-721 transferable + ERC-6551 TBA 跟随 + 转主自动写 SYSTEM boundary attestation（前端切段渲染：前任 vs 现任分段，转手历史链上不可隐藏） |
 | **Provider 经济安全 (SLA)** | 注册 skill 锁 USDC 押金 + SLA timeout 任意第三方可触发 `claimTimeoutAndSlash` + revoke attestation 联动 `slashOnRevoke` 自动罚没 → 防 provider 拿钱跑路 / 给垃圾结果 |
 | **Spending Trail (Proof-of-Spend)** | per-Soul 链上花费时间线 + `BudgetController` 每日预算上限（opt-in，原子 check-and-debit）→ caller 侧防 agent 失控被掏空 |
-| **30 秒接入** | `@pneuma/skill-starter` + `@pneuma/cli` 模板：5 分钟从 0 到链上 skill 收 USDC |
+| **30 秒接入** | 写一份 [`SKILL.md`](packages/openclaw-pneuma/SKILL.md) 投递到 Claude / OpenClaw / 任意 agent harness——AI 一行装就能调用，**底层走 Pneuma 链上 x402 结算**。本仓库已自带 5 个示例 skill（[`apps/hub/lib/skills/modules`](apps/hub/lib/skills/modules)：paper-summary · code-review · block-explainer · creative-write · quick-reasoning），用 Anthropic SDK 跑 Vercel；想用本机 `claude -p` 订阅算力请走 [`packages/pneuma-claude-skills`](packages/pneuma-claude-skills) 隧道模式 |
 
 ## 架构
 
