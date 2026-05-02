@@ -23,7 +23,6 @@
  */
 
 import { useEffect, useMemo } from "react";
-import Link from "next/link";
 import {
   ReactFlow,
   Background,
@@ -36,7 +35,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { useAccount, useReadContract } from "wagmi";
+import { useReadContract } from "wagmi";
 import { formatUnits, type Address } from "viem";
 import {
   SKILL_REGISTRY,
@@ -71,82 +70,20 @@ const KIND_META: Record<
 
 /* ─────────────────────────────────────────────────────────────────────── */
 
-/** 解析 NEXT_PUBLIC_ADMIN_ADDRESSES 逗号分隔白名单（小写归一） */
-function parseAdminAllowlist(): Set<string> {
-  const raw = process.env.NEXT_PUBLIC_ADMIN_ADDRESSES ?? "";
-  return new Set(
-    raw
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s.startsWith("0x") && s.length === 42),
-  );
-}
-
 /**
- * AdminGate —— 三态：
- *   1. 白名单为空（env 未配） → 任意 connected wallet 可见 + demo banner（橙色）
- *   2. 白名单非空 + 钱包未连 → 显示 ConnectPrompt
- *   3. 白名单非空 + 已连但不在白名单 → NotAuthorized
- *   4. 白名单非空 + 已连且在白名单 → 直接放行 + 绿色 admin banner
+ * DemoBanner —— 全开放访问，仅顶部加一条 demo-only 提示
+ *
+ * 之前：AdminGate 通过 NEXT_PUBLIC_ADMIN_ADDRESSES 白名单门禁，
+ *       未配 env → demo 模式（黄横幅 + 任意 wallet 可见），
+ *       配 env → 仅白名单地址进。
+ * 现在：完全去掉门禁，所有人都能看，顶部统一一条紫色"仅 demo 展示"标签
+ *       —— 录屏 / 评委演示路径不再需要连钱包 / 切到管理员账号。
  */
-function AdminGate({ children }: { children: React.ReactNode }) {
-  const { address, isConnected } = useAccount();
-  const allowlist = useMemo(() => parseAdminAllowlist(), []);
-  const open = allowlist.size === 0;
-  const allowed = isConnected && address && allowlist.has(address.toLowerCase());
-
-  if (!open && !isConnected) {
-    return (
-      <div className="max-w-2xl mx-auto px-8 py-24 text-center space-y-4">
-        <div className="text-magenta text-3xl">🔒</div>
-        <h1 className="display text-2xl">Admin only</h1>
-        <p className="text-ink-dim leading-relaxed">
-          这是 Pneuma 协议的实时看板（管理员视图）。请连接白名单内的钱包查看。
-        </p>
-        <Link
-          href="/discover"
-          className="text-cyan hover:text-magenta font-mono text-sm inline-block"
-        >
-          ← 返回 Discover
-        </Link>
-      </div>
-    );
-  }
-
-  if (!open && !allowed) {
-    return (
-      <div className="max-w-2xl mx-auto px-8 py-24 text-center space-y-4">
-        <div className="text-magenta text-3xl">🚫</div>
-        <h1 className="display text-2xl">Not authorized</h1>
-        <p className="text-ink-dim leading-relaxed">
-          当前钱包{" "}
-          <code className="font-mono text-magenta">
-            {address?.slice(0, 8)}…{address?.slice(-6)}
-          </code>{" "}
-          不在管理员白名单内。
-        </p>
-        <Link
-          href="/discover"
-          className="text-cyan hover:text-magenta font-mono text-sm inline-block"
-        >
-          ← 返回 Discover
-        </Link>
-      </div>
-    );
-  }
-
+function DemoBanner({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div
-        className={`px-4 py-2 text-[11px] font-mono text-center ${
-          open
-            ? "bg-amber-500/15 border-b border-amber-500/40 text-amber-300"
-            : "bg-emerald-500/10 border-b border-emerald-500/30 text-emerald-300"
-        }`}
-      >
-        {open
-          ? "⚠ Demo 模式 · 任意 connected wallet 可访问。生产环境请配置 NEXT_PUBLIC_ADMIN_ADDRESSES。"
-          : `✓ Admin · ${address?.slice(0, 8)}…${address?.slice(-6)}`}
+      <div className="px-4 py-2 text-[11px] font-mono text-center bg-magenta/15 border-b border-magenta/40 text-magenta">
+        ⚠ 实时看板 · 仅 demo 展示 · 平时用户使用看不到
       </div>
       {children}
     </>
@@ -759,11 +696,11 @@ function CommentRow({ event }: { event: LiveEvent }) {
   );
 }
 
-/** Default export —— gate + 真 dashboard */
+/** Default export —— demo banner + 真 dashboard（无 admin gating） */
 export default function AdminDashboardPage() {
   return (
-    <AdminGate>
+    <DemoBanner>
       <DashboardInner />
-    </AdminGate>
+    </DemoBanner>
   );
 }
