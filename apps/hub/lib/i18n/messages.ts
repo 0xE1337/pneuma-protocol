@@ -122,10 +122,10 @@ export const messages = {
     "home.pillars.identity.desc":
       "NFT 身份绑定一个智能账户钱包。转移 NFT → 钱包（和履历）跟着走。无平台锁定。",
     "home.pillars.money.tag": "支付",
-    "home.pillars.money.title": "真 ERC-20 USDC",
-    "home.pillars.money.standards": "ERC-20 + EIP-2612",
+    "home.pillars.money.title": "原生 USDC，可流通",
+    "home.pillars.money.standards": "ERC-20 + EIP-3009 · x402-ready",
     "home.pillars.money.desc":
-      "USDC 是真代币，不是平台积分。可转账、可在 DEX 兑换、可放任何钱包。任何 AI 服务都可通过 x402 接收。",
+      "Circle 官方 USDC，不是平台积分。可在任何 DEX 兑换、转入任何钱包。AI 服务通过 x402 协议（EIP-3009 单签授权）自动收款，零中介、零信任。",
     "home.pillars.rep.tag": "声誉",
     "home.pillars.rep.title": "开放 Attestation",
     "home.pillars.rep.standards": "PneumaAttestation 原语",
@@ -431,10 +431,10 @@ export const messages = {
     "home.pillars.identity.desc":
       "NFT identity bound to a smart-account wallet. Transfer the NFT → the wallet (and history) follows. No platform lock-in.",
     "home.pillars.money.tag": "Money",
-    "home.pillars.money.title": "Real ERC-20 USDC",
-    "home.pillars.money.standards": "ERC-20 + EIP-2612",
+    "home.pillars.money.title": "Native USDC, fully fungible",
+    "home.pillars.money.standards": "ERC-20 + EIP-3009 · x402-ready",
     "home.pillars.money.desc":
-      "USDC is a real token, not platform points. Transfer, swap on a DEX, hold in any wallet. Any AI service can accept it via x402.",
+      "Circle's official USDC, not platform points. Swap on any DEX, hold in any wallet. AI services accept it via the x402 protocol (EIP-3009 single-signature authorization) — no intermediaries, no trust required.",
     "home.pillars.rep.tag": "Reputation",
     "home.pillars.rep.title": "Open Attestations",
     "home.pillars.rep.standards": "PneumaAttestation primitive",
