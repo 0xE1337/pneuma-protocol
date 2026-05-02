@@ -577,11 +577,13 @@ function ActivityFeedPanel() {
         ))}
         {events.length === 0 && (
           <div className="text-[12px] text-ink-faint font-mono py-8 text-center">
-            等待链上事件…
+            <span className="text-cyan animate-pulse">⟳</span> 拉取链上 8 天历史中…
             <br />
-            <span className="text-[10px] mt-2 inline-block">
-              触发：用 <span className="text-cyan font-mono">/run</span> 调用一个 skill，
-              或运行 <span className="text-cyan font-mono">pneuma run</span> CLI
+            <span className="text-[10px] mt-2 inline-block leading-relaxed">
+              <span className="text-magenta">/api/dashboard/snapshot</span>{" "}
+              聚合 9 类合约事件 · 服务端 ~3s 冷缓存 · CDN warm cache &lt;100ms
+              <br />
+              首次最长 5s 内会出全部 200+ 历史事件 + caller 节点 + 评论
             </span>
           </div>
         )}
