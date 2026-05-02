@@ -32,41 +32,66 @@ cd pneuma-protocol
 node scripts/detect-skills.mjs --json
 ```
 
+The scanner probes **5 sources**, not just PATH binaries. A typical Claude Code user has 200+ candidates total:
+
+| Source | What it scans | Example IDs |
+|---|---|---|
+| `claude-agent` | `~/.claude/agents/*.md` (Claude Code subagents) | `agent-architect`, `agent-code-reviewer`, `agent-build-error-resolver` |
+| `claude-skill` | `~/.claude/skills/<name>/SKILL.md` (Anthropic skills) | `skill-article-writing`, `skill-brand-voice`, `skill-api-design` |
+| `marketplace-skill` | `~/.claude/plugins/marketplaces/<m>/skills/<s>/SKILL.md` | `pua-skills/p9`, `claude-plugins-official/<x>` |
+| `path-binary` | PATH on disk (~16 known dev/AI/media CLIs) | `claude-cli`, `forge-test`, `ffmpeg`, `gh-search` |
+| `brew-formula` | Useful Homebrew formulae (`brew list --formula`) | `brew-ffmpeg`, `brew-pandoc`, `brew-ripgrep` |
+
 **Output shape**:
 
 ```jsonc
 {
   "ok": true,
   "platform": "darwin",
-  "pneuma": {
-    "cliInstalled": true|false,
-    "keysFilePresent": true|false,
-    "keysFilePath": "/Users/<u>/.pneuma/keys.json",
-    "hint": "..."
+  "pneuma": { "cliInstalled": true|false, "keysFilePresent": true|false, ... },
+  "sourceCounts": {
+    "claude-agent": 48,
+    "claude-skill": 184,
+    "marketplace-skill": 11,
+    "path-binary": 13,
+    "brew-formula": 5
   },
+  "totalCandidates": 261,
   "candidates": [
     {
-      "id": "code-review-claude",
-      "name": "Claude Code Review",
-      "cmd": "claude",
-      "cmdPath": "/opt/homebrew/bin/claude",
-      "cmdVersion": "2.1.x (Claude Code)",
-      "category": "engineering",
-      "description": "Senior code review ...",
-      "suggestedPriceUsdc": 0.15,
-      "systemPromptHint": "..."
+      "source": "claude-agent" | "claude-skill" | "marketplace-skill" | "path-binary" | "brew-formula",
+      "id": "agent-code-reviewer",
+      "name": "code reviewer (subagent)",
+      "cmd": "code-reviewer",
+      "cmdPath": "/Users/<u>/.claude/agents/code-reviewer.md",
+      "category": "security",
+      "description": "...(280 chars)",
+      "suggestedPriceUsdc": 0.18
     },
     ...
-  ],
-  "totalCandidates": <N>
+  ]
 }
+```
+
+If you only want one source (e.g. just the Claude Code subagents):
+
+```bash
+node scripts/detect-skills.mjs --source=claude-agent
+```
+
+If you want the full description of a single candidate (the underlying SKILL.md / agent.md):
+
+```bash
+node scripts/detect-skills.mjs --full=agent-code-reviewer
 ```
 
 **What you do with it**:
 
-- Show the user a numbered list of `candidates[*].name` + `suggestedPriceUsdc` + the local `cmd` it would proxy.
-- Say something like *"I scanned your machine and found 14 tools you could turn into paid Pneuma skills. We'll come back to this in step 4 — first let's get you a wallet and a Soul."*
-- If `totalCandidates === 0`: gently tell the user they need at least one tool in PATH (claude, ffmpeg, gh, jq, …) and link them to `claude --version` install instructions.
+- **Don't** dump 261 candidates on the user — that's overload. Group by `source` and show a 5-row summary first:
+   *"I found 261 things you could register: **48** Claude subagents, **184** Anthropic skills, **11** marketplace plugins, **13** PATH binaries, **5** brew formulae. Which family do you want to start with?"*
+- Once they pick a family, show top-10 of that source by `suggestedPriceUsdc` desc. Let them tick.
+- For any candidate they want more detail on, fetch the full description with `--full=<id>` and read it back.
+- If `totalCandidates === 0`: ask whether the user has Claude Code installed at all — these scanners assume `~/.claude/` exists.
 
 ### Step 2 — Wallet (3 paths the user picks from)
 
