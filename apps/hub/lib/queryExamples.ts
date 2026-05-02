@@ -32,8 +32,8 @@ export interface QueryExample {
 
 export const QUERY_EXAMPLES: QueryExample[] = [
   {
-    label: "🔍 合约 diff + 风险",
-    query: `评审这段 Solidity diff，并用一句话总结主要风险：
+    label: "🔍 多 skill：审 diff + 写推广 + 一句话风险",
+    query: `评审这段 Solidity diff，给社区写一段 280 字的 Twitter thread 介绍这个修复，最后用一句话总结主要风险：
 
 language=solidity
 \`\`\`diff
@@ -45,7 +45,7 @@ language=solidity
 +        balances[msg.sender] = balances[msg.sender] - amount;
          token.transfer(msg.sender, amount - fee);
 \`\`\``,
-    hint: "2 步并行 → Code Review（inline diff） + Quick Reasoning（一句话风险）",
+    hint: "3 步并行 → Code Review（inline diff）+ Creative Write（推广文案）+ Quick Reasoning（一句话风险）",
   },
   {
     label: "📄 论文摘要",

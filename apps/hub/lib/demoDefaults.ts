@@ -34,8 +34,10 @@ export const DEMO_DEFAULTS: DemoDefaults = {
       "Write a 100-word product blurb for an AI translation agent that earns USDC while its operator sleeps.",
   },
 
-  // /run smart 模式 —— 无 ?query= 参数时的兜底（命中 Code Review + Quick Reasoning）
-  runSmartInitial: `评审这段 Solidity diff，并用一句话总结主要风险：
+  // /run smart 模式 —— 无 ?query= 参数时的兜底
+  // 故意三个不重叠的任务动词，强制 planner 拆 3 个 skill：
+  //   Code Review（diff）+ Creative Write（推广文案）+ Quick Reasoning（一句话风险）
+  runSmartInitial: `评审这段 Solidity diff，给社区写一段 280 字的 Twitter thread 介绍这个修复，最后用一句话总结主要风险：
 
 language=solidity
 \`\`\`diff
