@@ -133,10 +133,71 @@ function useHistoryBackfill() {
   const pushEvent = useLiveStore((s) => s.pushEvent);
 
   useEffect(() => {
-    if (!publicClient) return;
     let cancelled = false;
 
-    async function backfill() {
+    /**
+     * 快速路径：服务端聚合 snapshot（Vercel CDN cache，warm < 100ms）
+     * 把 90 个 RPC + 13 个 enrich 合并成一次 fetch + 一次解析。
+     * 失败再 fallback 到客户端 RPC backfill。
+     */
+    async function fastPathSnapshot(): Promise<boolean> {
+      try {
+        const resp = await fetch("/api/dashboard/snapshot", {
+          // Next.js 客户端默认 fetch 是 no-store；显式 force-cache 让浏览器
+          // 也参与 stale-while-revalidate（边缘 + 浏览器双层缓存）
+          cache: "force-cache",
+        });
+        if (!resp.ok) return false;
+        const data = (await resp.json()) as {
+          events: Array<{
+            id: string;
+            kind: LiveEventKind;
+            blockNumber: string;
+            txHash: Hex;
+            args: Record<string, unknown>;
+          }>;
+          generatedAt: number;
+          elapsedMs: number;
+        };
+        if (cancelled) return true;
+        for (const evt of data.events) {
+          // 反序列化：bigint 字段（blockNumber 等）从 string → bigint
+          const args: Record<string, unknown> = { ...evt.args };
+          // 常见 bigint 字段（按事件 args 已知字段名）
+          for (const k of [
+            "callId",
+            "skillId",
+            "amount",
+            "stake",
+            "tokenId",
+            "paidAmount",
+          ]) {
+            if (typeof args[k] === "string" && /^\d+$/.test(args[k] as string)) {
+              args[k] = BigInt(args[k] as string);
+            }
+          }
+          pushEvent({
+            id: evt.id,
+            kind: evt.kind,
+            blockNumber: BigInt(evt.blockNumber),
+            txHash: evt.txHash,
+            args,
+          });
+        }
+        console.log(
+          `[live-events] snapshot fast path: ${data.events.length} events, server elapsed=${data.elapsedMs}ms`,
+        );
+        return true;
+      } catch (err) {
+        console.warn(
+          "[live-events] snapshot fast path failed, falling back to RPC:",
+          (err as Error).message,
+        );
+        return false;
+      }
+    }
+
+    async function clientRpcBackfill() {
       if (!publicClient) return;
       try {
         const latest = await publicClient.getBlockNumber();
@@ -231,7 +292,12 @@ function useHistoryBackfill() {
       }
     }
 
-    backfill();
+    // 优先 snapshot 快路径；失败再走客户端 RPC backfill
+    (async () => {
+      const ok = await fastPathSnapshot();
+      if (!ok && !cancelled) await clientRpcBackfill();
+    })();
+
     return () => {
       cancelled = true;
     };
