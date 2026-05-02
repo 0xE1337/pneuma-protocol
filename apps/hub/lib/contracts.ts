@@ -492,6 +492,37 @@ export const PneumaAttestationAbi = [
     inputs: [{ name: "recipient", type: "address" }],
     outputs: [{ name: "", type: "uint256" }],
   },
+  // 单个 attestation 完整 struct（含 comment 字符串）—— 用于 dashboard
+  // CallerRatedSkill 事件流后异步 enrich comment 文字，因为 event ABI 只带
+  // (callId / skillId / caller / rating / attestationUid)，comment 在合约 storage 里
+  {
+    type: "function",
+    name: "getAttestation",
+    stateMutability: "view",
+    inputs: [{ name: "uid", type: "bytes32" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "uid", type: "bytes32" },
+          { name: "recipient", type: "address" },
+          { name: "attester", type: "address" },
+          { name: "skillId", type: "uint256" },
+          { name: "callId", type: "uint256" },
+          { name: "paymentHash", type: "bytes32" },
+          { name: "rating", type: "uint8" },
+          { name: "paidAmount", type: "uint256" },
+          { name: "skillName", type: "string" },
+          { name: "skillCategory", type: "string" },
+          { name: "timestamp", type: "uint256" },
+          { name: "revoked", type: "bool" },
+          { name: "raterRole", type: "uint8" }, // 0=PROVIDER, 1=CALLER, 2=JUROR, 3=SYSTEM
+          { name: "comment", type: "string" },
+        ],
+      },
+    ],
+  },
   {
     type: "function",
     name: "SCHEMA",

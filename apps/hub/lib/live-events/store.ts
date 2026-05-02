@@ -77,6 +77,8 @@ interface LiveStore {
   seen: Set<string>;
 
   pushEvent: (e: Omit<LiveEvent, "receivedAt">) => void;
+  /** 异步回填某个 event id 的 args（dashboard 拉到 attestation 详情后写 comment） */
+  enrichEventArgs: (id: string, extraArgs: Record<string, unknown>) => void;
   reset: () => void;
 }
 
@@ -141,6 +143,17 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
     };
 
     set({ events, edges, seen, eventCounts });
+  },
+
+  enrichEventArgs: (id, extraArgs) => {
+    const state = get();
+    let touched = false;
+    const events = state.events.map((e) => {
+      if (e.id !== id) return e;
+      touched = true;
+      return { ...e, args: { ...e.args, ...extraArgs } };
+    });
+    if (touched) set({ events });
   },
 
   reset: () =>

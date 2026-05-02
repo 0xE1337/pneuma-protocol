@@ -23,7 +23,7 @@
  *   - Arc Testnet getLogs 上限保守用 5000 blocks（约 12-24 小时活动覆盖）
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useWatchContractEvent, usePublicClient } from "wagmi";
 import type { Address, Hex } from "viem";
 import {
@@ -36,7 +36,7 @@ import {
   PneumaCommonsAbi,
   ReputationGraphAbi,
 } from "@/lib/contracts";
-import { useLiveStore, type LiveEventKind } from "./store";
+import { useLiveStore, type LiveEvent, type LiveEventKind } from "./store";
 
 /**
  * 历史回放 block range —— Arc Testnet ~8s/block
@@ -239,12 +239,74 @@ function useHistoryBackfill() {
 }
 
 /**
+ * 异步 enrichment：CallerRatedSkill 事件只带 attestationUid，comment 在
+ * PneumaAttestation contract storage 里。这个 hook 监控 store 里所有 caller_rated
+ * 事件，对每条 event 调一次 getAttestation(uid) 拿 comment 然后写回 event.args.comment。
+ *
+ * Comment 面板（selectCommentEvents）从此能读到真实文字反馈。
+ *
+ * dedup：seen ref 记下已 enrich 过的 event id，避免每次 events 数组变化都重 fetch。
+ */
+function useCommentEnrichment() {
+  const events = useLiveStore((s) => s.events);
+  const enrichEventArgs = useLiveStore((s) => s.enrichEventArgs);
+  const publicClient = usePublicClient();
+  const seen = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (!publicClient) return;
+    const targets = events.filter(
+      (e) =>
+        e.kind === "caller_rated" &&
+        !seen.current.has(e.id) &&
+        typeof e.args.attestationUid === "string" &&
+        (e.args.comment === undefined),
+    );
+    if (targets.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      for (const e of targets) {
+        if (cancelled) return;
+        seen.current.add(e.id);
+        try {
+          const att = (await publicClient.readContract({
+            address: PNEUMA_ATTESTATION,
+            abi: PneumaAttestationAbi,
+            functionName: "getAttestation",
+            args: [e.args.attestationUid as Hex],
+          })) as { comment: string; recipient: Address };
+          if (cancelled) return;
+          enrichEventArgs(e.id, {
+            comment: att.comment,
+            recipient: att.recipient,
+          });
+        } catch (err) {
+          // attestation 可能尚未上链 / RPC 抖动 —— 释放 seen 让下次 events 更新时重试
+          seen.current.delete(e.id);
+          console.warn(
+            `[live-events] getAttestation(${e.args.attestationUid}) failed:`,
+            (err as Error).message.slice(0, 80),
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [events, publicClient, enrichEventArgs]);
+}
+
+/**
  * Pneuma 协议层最重要的 9 类事件全部在这里订阅。
  * 单一 hook 入口，只在 demo-dashboard page 里 mount 一次。
  */
 export function useLiveSubscriptions() {
   // 1. mount 时拉历史 5000 blocks（一次性）
   useHistoryBackfill();
+
+  // 1.5. 异步把 CallerRatedSkill 事件的 comment 字段从 attestation contract 拉回来
+  useCommentEnrichment();
 
   // 2. 订阅未来事件（持续）
   const pushEvent = useLiveStore((s) => s.pushEvent);
