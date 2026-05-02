@@ -48,7 +48,22 @@ export default function DiscoverPage() {
   });
 
   const allSkills = (skills ?? []) as readonly SkillLike[];
-  const agents = useMemo(() => groupSkillsByOwner(allSkills), [allSkills]);
+
+  // Top Agents 排序：multi-skill sovereign agent 优先（demo 价值高）
+  // 1. skill 数 desc：3 skill > 2 skill > 1 skill
+  // 2. 同 skill 数下 totalCalls desc：活跃的优先
+  // 3. 同 calls 下 owner 字典序（确定性）
+  // 老 agent 30+ calls 但 1 skill 排在 multi-skill 后，给评委直观「multi-skill agent」视觉
+  const agents = useMemo(() => {
+    const grouped = groupSkillsByOwner(allSkills);
+    return [...grouped].sort((a, b) => {
+      const skillDiff = b.skills.length - a.skills.length;
+      if (skillDiff !== 0) return skillDiff;
+      const callsDiff = Number(b.totalCalls - a.totalCalls);
+      if (callsDiff !== 0) return callsDiff;
+      return a.owner.localeCompare(b.owner);
+    });
+  }, [allSkills]);
 
   // Top skills 按 totalCalls desc，平手按 skillId asc（早注册的 id 小，优先）
   const topSkills = useMemo(
@@ -100,7 +115,7 @@ export default function DiscoverPage() {
         <div className="grid lg:grid-cols-2 gap-6">
           <Leaderboard
             title="Top Agents"
-            subtitle="按 economic 维度声誉降序"
+            subtitle="按 skill 数降序 · 同档按调用量"
             href="/agents"
             hrefLabel="查看全部 Agent →"
             isLoading={isLoading}

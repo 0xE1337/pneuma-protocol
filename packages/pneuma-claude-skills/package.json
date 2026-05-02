@@ -16,6 +16,7 @@
     "deactivate:old": "tsx script/deactivate-old.ts",
     "setup:multi-agent": "tsx script/setup-multi-agent.ts",
     "register:multi-agent": "tsx script/register-multi-agent.ts",
+    "seed:cross-agent": "tsx script/seed-cross-agent.ts",
     "seed-traffic": "tsx script/seed-traffic.ts",
     "smoke": "tsx script/smoke.ts"
   },

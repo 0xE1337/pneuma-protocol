@@ -53,7 +53,7 @@ export default function SkillsPage() {
   }, [skills]);
 
   const filteredSkills = useMemo(() => {
-    if (!skills) return [] as typeof skills;
+    if (!skills) return undefined;
     if (!activeCategory) return skills;
     return skills.filter((s) => s.category === activeCategory);
   }, [skills, activeCategory]);
