@@ -1,5 +1,8 @@
 cache/
 out/
-broadcast/*/dry-run/
+# Broadcast artifacts are per-deployer; demo + local-only
+broadcast/
 lib/
 !lib/.gitkeep
+# Stray cast / forge stderr captures
+*.err

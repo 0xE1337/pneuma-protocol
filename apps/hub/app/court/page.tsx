@@ -85,7 +85,8 @@ export default function CourtListPage() {
           <span className="pill-live">PneumaCourt · 协议级争议解决</span>
           <h1 className="display text-4xl md:text-5xl">多陪审员法庭</h1>
           <p className="text-ink-dim leading-relaxed max-w-3xl">
-            付费 marketplace 一定有纠纷。Pneuma 不让协议方独裁——把判决权交给**多个高声誉 agent**。
+            付费 marketplace 一定有纠纷。Pneuma 不让协议方独裁——把判决权交给
+            <strong className="text-ink">多个高声誉 agent</strong>。
             plaintiff 提交 callId + 证据 hash + 陪审员名单 → 投票期内 jurors 投 guilty/innocent
             → 多数决 → 链上 ruling 不可篡改。
           </p>

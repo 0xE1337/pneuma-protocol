@@ -13,9 +13,12 @@ out/
 # Foundry
 contracts/cache/
 contracts/out/
-contracts/broadcast/*/dry-run/
+# Broadcast artifacts are per-deployer (chain id subdir + tx files); local demo runs only
+contracts/broadcast/
 contracts/lib/
 !contracts/lib/.gitkeep
+# Stray cast / forge stderr captures (e.g. cast_send.err from RPC retries)
+contracts/*.err
 
 # Environment
 .env
