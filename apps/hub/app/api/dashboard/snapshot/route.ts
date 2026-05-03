@@ -34,7 +34,11 @@ export const revalidate = 30;
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const HISTORY_BLOCK_RANGE = 90000n; // ~8 天
+// Arc 实测 ~0.5s/block，要覆盖 demo 5 天历史需要 ~864k blocks。
+// 但 RPC 单查 10k 上限 + 90 个 spec 上限会变成 850+ 并发 → 退而求其次
+// 取 360k blocks（~50 小时活动窗口），覆盖最近一两天的全部 demo 资产。
+// 38 chunks × 9 specs = 342 并行 RPC，Vercel Fluid Compute 实测 3-5s 完成。
+const HISTORY_BLOCK_RANGE = 360000n;
 const CHUNK_SIZE = 9500n;
 
 type EventKind =
